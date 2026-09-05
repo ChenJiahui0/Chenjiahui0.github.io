@@ -1,0 +1,272 @@
+---
+title: Agent 和 Harness 到底是什么？
+layout: post
+author: 陈家辉
+tags:
+  - 人工智能
+  - Agent
+  - Harness
+---
+
+<style>
+/* ========== 文章美化样式（作用域限定在 .kb-article 内，避免影响全局） ========== */
+.kb-article{line-height:1.9;font-size:16px}
+.kb-article h2{font-size:1.45em;margin:2.2em 0 .8em;padding-bottom:.35em;border-bottom:2px solid #eef0f6;color:#1f2430;position:relative;font-weight:700}
+.kb-article h3{font-size:1.15em;margin:1.6em 0 .6em;color:#333a4b;font-weight:700}
+.kb-article p{margin:.6em 0 1em}
+.kb-article ul,.kb-article ol{padding-left:1.4em;margin:.6em 0 1.1em}
+.kb-article li{margin:.35em 0}
+/* 顶部元信息 */
+.kb-meta{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:#f5f7fb;border:1px solid #e7ecf5;border-radius:10px;padding:10px 16px;margin:0 0 26px;color:#5a6478;font-size:.92em}
+.kb-chip{background:#e8effd;color:#2b5fd9;border-radius:20px;padding:2px 12px;font-size:.85em;white-space:nowrap}
+/* Hero 核心结论卡 */
+.kb-hero{background:linear-gradient(135deg,#3b5bf0 0%,#6d3df0 60%,#9b3df0 100%);color:#fff;border-radius:16px;padding:30px 28px;margin:6px 0 26px;box-shadow:0 12px 30px rgba(80,70,229,.28);text-align:center}
+.kb-hero .kb-hero-label{font-size:.85em;letter-spacing:4px;opacity:.85;margin-bottom:12px;font-weight:600}
+.kb-hero .kb-hero-formula{font-size:clamp(1.25rem,2.6vw,1.8rem);font-weight:800;line-height:1.5;margin:0 0 14px}
+.kb-hero .kb-hero-formula .plus{color:#ffe08a;margin:0 8px}
+.kb-hero p{margin:0;font-size:.98em;opacity:.95;max-width:720px;margin:0 auto}
+/* 章节入口条（非标题） */
+.kb-lead{display:flex;align-items:center;gap:14px;background:#fbfcff;border:1px solid #e8edf8;border-radius:12px;padding:16px 18px;margin:1.4em 0}
+.kb-lead .kb-icon{flex:none;width:44px;height:44px;border-radius:50%;background:#e8effd;color:#2b5fd9;font-weight:800;font-size:1.15em;display:flex;align-items:center;justify-content:center}
+.kb-lead b{color:#2b5fd9}
+/* 定义卡 */
+.kb-def{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin:1em 0 1.4em}
+.kb-def-item{background:#fafbfe;border:1px solid #e9edf6;border-left:4px solid #4f6ef7;border-radius:10px;padding:16px 18px}
+.kb-def-item h3{margin:0 0 8px;font-size:1.05em}
+.kb-def-item .kb-word{font-weight:700;color:#4f6ef7;font-size:1.12em;display:block;margin-bottom:4px}
+.kb-def-item p{margin:0;font-size:.95em}
+/* 卡片网格 */
+.kb-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin:1em 0 1.4em}
+.kb-grid .kb-card{background:#fff;border:1px solid #e7ebf4;border-radius:12px;padding:16px 16px 14px;transition:transform .15s ease,box-shadow .15s ease}
+.kb-grid .kb-card:hover{transform:translateY(-3px);box-shadow:0 8px 20px rgba(31,45,120,.10)}
+.kb-grid .kb-card .kb-num{display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:30px;border-radius:9px;background:#eef2ff;color:#3d5bf5;font-weight:800;font-size:.92em;margin-bottom:8px;padding:0 8px}
+.kb-grid .kb-card b{display:block;font-size:1em;margin-bottom:4px}
+.kb-grid .kb-card p{margin:0;font-size:.93em;color:#4b5568}
+.kb-grid .kb-card.kb-bad .kb-num{background:#fef1f1;color:#d64550}
+.kb-grid .kb-card.kb-bad b{color:#d64550}
+/* 表格 */
+.kb-table-wrap{overflow-x:auto;margin:1em 0 1.4em;border-radius:12px;border:1px solid #e7ebf4}
+.kb-table-wrap table{width:100%;border-collapse:collapse;background:#fff;font-size:.95em;margin:0}
+.kb-table-wrap thead th{background:#f0f4ff;color:#1f2d5c;font-weight:700;text-align:left;padding:11px 16px;white-space:nowrap;border-bottom:2px solid #dbe4fb}
+.kb-table-wrap tbody td{padding:11px 16px;border-bottom:1px solid #eef1f7;vertical-align:top;color:#3a4152}
+.kb-table-wrap tbody tr:last-child td{border-bottom:none}
+.kb-table-wrap tbody tr:nth-child(even){background:#fafbfe}
+.kb-table-wrap tbody tr:hover{background:#f3f6ff}
+.kb-table-wrap code{background:#f0f2f7;color:#c7254e;border-radius:4px;padding:1px 6px;font-size:.92em}
+/* 流程（Agent Loop） */
+.kb-flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:8px;justify-content:center;background:#f8f9fd;border:1px dashed #cdd6ea;border-radius:14px;padding:20px 16px;margin:1.2em 0}
+.kb-flow .kb-step{flex:1 1 150px;max-width:200px;background:#fff;border:1px solid #dfe5f2;border-radius:10px;padding:12px 10px;text-align:center}
+.kb-flow .kb-step b{display:block;font-size:.92em;color:#22315f;margin-bottom:2px}
+.kb-flow .kb-step small{color:#7b8396;font-size:.8em;line-height:1.4;display:block}
+.kb-flow .kb-arrow{display:flex;align-items:center;color:#4f6ef7;font-weight:800;font-size:1.2em;padding:0 2px}
+.kb-flow .kb-goal{flex:1 1 150px;max-width:200px;background:linear-gradient(135deg,#22c55e,#16a34a);border:none;border-radius:10px;padding:12px 10px;text-align:center;color:#fff}
+.kb-flow .kb-goal b{display:block;font-size:.92em;margin-bottom:2px}
+.kb-flow .kb-goal small{font-size:.8em;opacity:.92;display:block;line-height:1.4}
+.kb-flow-note{text-align:center;color:#7b8396;font-size:.85em;margin:-.4em 0 1.4em}
+/* 引用 callout */
+.kb-callout{background:#fff7ea;border:1px solid #ffe0b0;border-left:4px solid #f5a623;border-radius:10px;padding:12px 16px;margin:1.2em 0;font-size:.95em;color:#5a4a1f}
+.kb-callout b{color:#b26a00}
+/* 时间线 */
+.kb-timeline{position:relative;margin:1.4em 0 1.6em;padding-left:26px}
+.kb-timeline::before{content:"";position:absolute;left:7px;top:6px;bottom:6px;width:2px;background:linear-gradient(180deg,#4f6ef7,#9b3df0)}
+.kb-tl-item{position:relative;margin:0 0 18px;padding:14px 18px;background:#fff;border:1px solid #e7ebf4;border-radius:12px}
+.kb-tl-item::before{content:"";position:absolute;left:-24px;top:20px;width:12px;height:12px;border-radius:50%;background:#4f6ef7;border:3px solid #fff;box-shadow:0 0 0 2px #4f6ef7}
+.kb-tl-item .kb-tl-year{display:inline-block;background:#eef2ff;color:#3d5bf5;border-radius:6px;font-size:.8em;font-weight:700;padding:2px 10px;margin-right:10px}
+.kb-tl-item h3{display:inline;font-size:1.05em;margin:0}
+.kb-tl-item .kb-tl-q{color:#8a93a6;font-size:.85em;margin:6px 0 4px}
+.kb-tl-item p{margin:0;font-size:.95em}
+/* 结论列表 */
+.kb-conclusion{background:#f6f8ff;border:1px solid #dde6ff;border-radius:14px;padding:20px 20px 8px;margin:1.2em 0}
+.kb-conclusion ol{margin:0;padding-left:0;list-style:none;counter-reset:concl}
+.kb-conclusion li{counter-increment:concl;position:relative;padding:6px 0 10px 44px;border-bottom:1px dashed #e2e9fb}
+.kb-conclusion li:last-child{border-bottom:none}
+.kb-conclusion li::before{content:counter(concl);position:absolute;left:0;top:8px;width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#4f6ef7,#9b3df0);color:#fff;font-weight:800;font-size:.95em;display:flex;align-items:center;justify-content:center}
+.kb-conclusion b{color:#27409e}
+/* 来源 */
+.kb-source{margin-top:2em;padding:14px 18px;background:#f8f9fb;border-left:3px solid #c8d2e8;border-radius:0 8px 8px 0;font-size:.9em;color:#6b7280}
+.kb-source a{color:#4f6ef7;text-decoration:none}
+@media (max-width:767px){.kb-flow .kb-arrow{transform:rotate(90deg);padding:2px 0}.kb-hero{padding:22px 16px}}
+</style>
+
+<div class="kb-article">
+
+<!-- 顶部元信息 -->
+<div class="kb-meta">
+  <span>视频知识点总结 · 以概念为纲，非视频逐段转述</span>
+  <span class="kb-chip">人工智能</span>
+  <span class="kb-chip">智能体 / Agent</span>
+  <span class="kb-chip">Harness</span>
+  <span class="kb-chip">Agent Loop</span>
+  <span class="kb-chip">工具调用</span>
+</div>
+
+<!-- Hero：一句话掌握全片 -->
+<div class="kb-hero">
+  <div class="kb-hero-label">一句话掌握全片</div>
+  <div class="kb-hero-formula">Agent <span class="plus">=</span> LLM（大脑）<span class="plus">+</span> Harness（身体与护栏）</div>
+  <p>Agent 是「会主动干活的人」，Harness 是「保证他靠谱干活的整套外壳机制」——两者缺一不可。</p>
+</div>
+
+<!-- ========== 知识点 1 ========== -->
+<h2 id="agent">知识点 1：什么是 Agent（智能体）</h2>
+
+<ul>
+  <li><b>定义</b>：能<b>自主完成目标的多步执行 AI 系统</b>，而不是「一问一答」的聊天机器人。</li>
+  <li><b>类比</b>：LLM 只是「大脑 / 马」，Agent 是大脑 + 身体 + 工具的完整个体，是会主动干活的人。</li>
+</ul>
+
+<h3>四大特征</h3>
+<div class="kb-grid">
+  <div class="kb-card"><span class="kb-num">①</span><b>目标拆解</b><p>把大目标拆成可执行的小步骤</p></div>
+  <div class="kb-card"><span class="kb-num">②</span><b>工具调用</b><p>搜索、运行代码、读写文件、调 API</p></div>
+  <div class="kb-card"><span class="kb-num">③</span><b>自主循环</b><p>执行 → 观察结果 → 修正，直到完成</p></div>
+  <div class="kb-card"><span class="kb-num">④</span><b>记忆反思</b><p>基于历史上下文调整策略</p></div>
+</div>
+
+<!-- ========== 知识点 2 ========== -->
+<h2 id="harness">知识点 2：什么是 Harness（缰绳 / 马具）</h2>
+
+<div class="kb-def">
+  <div class="kb-def-item">
+    <span class="kb-word">词源</span>
+    <p>harness 本义是「马具、缰绳」——用来驾驭马、让马按人的意图干活。</p>
+  </div>
+  <div class="kb-def-item">
+    <span class="kb-word">定义</span>
+    <p>包裹在 LLM 外层的<b>整套工程机制</b>，负责让 AI 稳定、可控、安全、不出错地完成多步任务。</p>
+  </div>
+</div>
+
+<div class="kb-lead">
+  <div class="kb-icon">H</div>
+  <div><b>模型决定 Agent 的「能力上限」，Harness 决定它的「稳定下限」与落地可行性。</b></div>
+</div>
+
+<!-- ========== 知识点 3 ========== -->
+<h2 id="why">知识点 3：为什么需要 Harness：裸 LLM 的四大问题</h2>
+
+<div class="kb-grid">
+  <div class="kb-card kb-bad"><span class="kb-num">1</span><b>输出不可控</b><p>AI 经常「不听话」：不按指定格式输出、答非所问、偷懒（AI 比想象中更会偷懒）。</p></div>
+  <div class="kb-card kb-bad"><span class="kb-num">2</span><b>会跑偏失控</b><p>没有约束时可能偏离目标、陷入死循环（一个死循环就能把 Token 烧光）。</p></div>
+  <div class="kb-card kb-bad"><span class="kb-num">3</span><b>成本爆炸</b><p>多轮工具调用使上下文越滚越大，Token 消耗失控，钱包告急。</p></div>
+  <div class="kb-card kb-bad"><span class="kb-num">4</span><b>安全隐患</b><p>无权限控制时，AI 可能改错文件、执行危险命令、访问不该访问的资源。</p></div>
+</div>
+
+<!-- ========== 知识点 4 ========== -->
+<h2 id="compose">知识点 4：Harness 的组成：Agent 背后的「隐形操作系统」</h2>
+
+<div class="kb-grid">
+  <div class="kb-card"><span class="kb-num">①</span><b>上下文管理</b><p>上下文拼装与压缩，防止上下文爆炸，控制成本。</p></div>
+  <div class="kb-card"><span class="kb-num">②</span><b>工具调用循环</b><p>承接 Function Calling / MCP，让模型能实际「动手」。</p></div>
+  <div class="kb-card"><span class="kb-num">③</span><b>结构化输出控制</b><p>JSON Mode / 输出解析器，强制模型按约定格式返回。</p></div>
+  <div class="kb-card"><span class="kb-num">④</span><b>权限与沙箱</b><p>命令白名单、目录范围限制、沙箱隔离，管住「能做什么」。</p></div>
+  <div class="kb-card"><span class="kb-num">⑤</span><b>错误处理重试</b><p>格式校验、自动重试、错误回退，发现错误并纠正。</p></div>
+  <div class="kb-card"><span class="kb-num">⑥</span><b>成本控制</b><p>Token 预算、轮次限制、超时中断。</p></div>
+  <div class="kb-card"><span class="kb-num">⑦</span><b>记忆管理</b><p>短期上下文与长期记忆的读写与过期策略。</p></div>
+  <div class="kb-card"><span class="kb-num">⑧</span><b>日志审计</b><p>Log / Trace / 审计记录，可回放、可追溯、可人工介入。</p></div>
+</div>
+
+<!-- ========== 知识点 5 ========== -->
+<h2 id="loop">知识点 5：Agent 的运行机制：Agent Loop</h2>
+
+<p><b>ReAct 范式</b>：思考 → 行动 → 观察 →（循环直到完成）</p>
+
+<div class="kb-flow">
+  <div class="kb-step"><b>Reasoning</b><small>思考</small></div>
+  <div class="kb-arrow">→</div>
+  <div class="kb-step"><b>Acting</b><small>调用工具行动</small></div>
+  <div class="kb-arrow">→</div>
+  <div class="kb-step"><b>Observing</b><small>观察结果</small></div>
+  <div class="kb-arrow">→</div>
+  <div class="kb-goal"><b>目标达成</b><small>输出 / 终止</small></div>
+</div>
+<p class="kb-flow-note">执行 → 观察 → 修正，未达成目标则回到「思考」继续循环</p>
+
+<ul>
+  <li><b>ReAct（主流）</b>：思考一步、行动一步、观察一步，边想边做。</li>
+  <li><b>Plan 范式</b>：先整体规划任务清单，再逐步执行，适合复杂长任务。</li>
+  <li><b>多 Agent / 子 Agent</b>：主 Agent 派出子 Agent 分工或并行，各管各的上下文与权限。</li>
+  <li><b>护栏必备</b>：循环必须配轮次上限 / 预算 / 超时，否则就是「烧钱的无底洞」。</li>
+</ul>
+
+<!-- ========== 知识点 6 ========== -->
+<h2 id="tools">知识点 6：工具调用的两个关键概念（易混淆，重点避坑）</h2>
+
+<div class="kb-table-wrap">
+  <table>
+    <thead>
+      <tr><th scope="col">概念</th><th scope="col">说明</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><b>Function Calling</b></td><td>让模型输出「结构化调用意图 + 参数」的具体<b>实现机制</b>，是底层能力。</td></tr>
+      <tr><td><b>MCP</b></td><td>Model Context Protocol——统一工具接入的<b>开放协议 / 标准</b>，相当于给 AI 配的「USB 接口」，一次接入处处可用。</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="kb-callout">
+  <b>易错点</b>：MCP ≠ Function Calling（一个是协议标准层，一个是实现机制）；「调用外部工具 / 服务」≠「调用另一个 AI」。分清这三层，能避免大量争论。
+</div>
+
+<!-- ========== 知识点 7 ========== -->
+<h2 id="evo">知识点 7：工程范式的演进：Prompt → Context → Harness</h2>
+
+<div class="kb-timeline">
+  <div class="kb-tl-item">
+    <span class="kb-tl-year">2023–2024</span><h3>Prompt Engineering</h3>
+    <p class="kb-tl-q">核心问题：<b>怎么问</b></p>
+    <p>提示词措辞、示例、角色设定。</p>
+  </div>
+  <div class="kb-tl-item">
+    <span class="kb-tl-year">2025</span><h3>Context Engineering</h3>
+    <p class="kb-tl-q">核心问题：<b>让 AI 看到什么</b></p>
+    <p>上下文文档、相关信息注入。</p>
+  </div>
+  <div class="kb-tl-item">
+    <span class="kb-tl-year">2026 · 当下</span><h3>Harness Engineering</h3>
+    <p class="kb-tl-q">核心问题：<b>系统能预防 / 测量 / 修复什么</b></p>
+    <p>外层工程机制：校验、约束、重试、预算、审计。</p>
+  </div>
+</div>
+
+<div class="kb-callout">
+  三者是<b>层层叠加</b>而非替代：Prompt 管「怎么说」，Context 管「能看到什么」，Harness 管「系统如何兜底」。<b>Agent 做得好不好，关键看外层 Harness 能否预防错误、测量错误、修复错误。</b>
+</div>
+
+<!-- ========== 知识点 8 ========== -->
+<h2 id="practice">知识点 8：实战要点：让 Agent 靠谱落地的工程手段</h2>
+
+<div class="kb-table-wrap">
+  <table>
+    <thead>
+      <tr><th scope="col">要点</th><th scope="col">做法</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>防 Token 爆炸</td><td>限制每轮输出与总轮数、定期压缩上下文、丢弃冗余历史。</td></tr>
+      <tr><td>防死循环</td><td>设置最大迭代次数、超时中断、检测「重复动作」即终止。</td></tr>
+      <tr><td>保输出格式</td><td>优先使用模型的结构化输出（JSON）模式，程序侧再做解析校验；把固定规则写入 <code>system</code> 字段，比每次临时叮嘱更可靠。</td></tr>
+      <tr><td>控执行边界</td><td>权限白名单、沙箱、审计日志，让 AI 只能在授权范围内干活。</td></tr>
+      <tr><td>反馈闭环</td><td>用 Lint / 单测 / 校验器等自动化信号及时纠错，错了就拉回来重试。</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ========== 核心结论速记 ========== -->
+<h2 id="conclusion">核心结论速记</h2>
+
+<div class="kb-conclusion">
+  <ol>
+    <li><b>Agent = LLM + Harness</b>，缺一不可——只有模型没有外壳，干不成多步实事。</li>
+    <li><b>分工</b>：Agent 负责「聪明决策」，Harness 负责「稳定执行」。</li>
+    <li>Agent 的可靠程度，<b>不取决于模型有多强，而取决于外层机制能否预防、测量、修复错误</b>。</li>
+    <li>Harness Engineering 是当下 Agent 从 Demo 走向<b>生产可用</b>的核心命题。</li>
+    <li>评判一个 Agent 好不好用就看三点：<b>能否稳定干完活、不捅娄子、成本可控</b>。</li>
+  </ol>
+</div>
+
+<!-- ========== 来源 ========== -->
+<div class="kb-source">
+  内容来源：B 站视频《Agent和Harness到底是什么？一个动画彻底搞懂！》（<a href="https://www.bilibili.com/video/BV1t55v6DE2v">BV1t55v6DE2v</a>，13:07）· UP 主：轩辕的编程宇宙 · 合集：《AI技术与AI产品分享》第 3 期
+</div>
+
+</div>
