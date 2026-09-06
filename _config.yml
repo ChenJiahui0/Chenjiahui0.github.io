@@ -78,7 +78,7 @@ google-ga_track_id: UA-163806439-1
 # Sidebar settings
 sidebar: true # whether or not using Sidebar.
 sidebar-about-description: "要做一个有 swag 的程序员 <br> React Team @ Meta"
-sidebar-avatar:  # use absolute URL, seeing it's used in both `/` and `/about/`
+sidebar-avatar: /img/logo.svg # use absolute URL, seeing it's used in both `/` and `/about/`
 
 # Featured Tags
 featured-tags: true # whether or not using Feature-Tags

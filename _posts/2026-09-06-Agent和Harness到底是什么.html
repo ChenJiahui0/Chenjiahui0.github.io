@@ -72,7 +72,7 @@ tags:
 .kb-tl-item{position:relative;margin:0 0 18px;padding:14px 18px;background:#fff;border:1px solid #e7ebf4;border-radius:12px}
 .kb-tl-item::before{content:"";position:absolute;left:-24px;top:20px;width:12px;height:12px;border-radius:50%;background:#4f6ef7;border:3px solid #fff;box-shadow:0 0 0 2px #4f6ef7}
 .kb-tl-item .kb-tl-year{display:inline-block;background:#eef2ff;color:#3d5bf5;border-radius:6px;font-size:.8em;font-weight:700;padding:2px 10px;margin-right:10px}
-.kb-tl-item h3{display:inline;font-size:1.05em;margin:0}
+.kb-tl-item b{display:inline;font-size:1.05em;margin:0}
 .kb-tl-item .kb-tl-q{color:#8a93a6;font-size:.85em;margin:6px 0 4px}
 .kb-tl-item p{margin:0;font-size:.95em}
 /* 结论列表 */
@@ -90,7 +90,6 @@ tags:
 
 <div class="kb-article">
 
-<!-- 顶部元信息 -->
 <div class="kb-meta">
   <span>视频知识点总结 · 以概念为纲，非视频逐段转述</span>
   <span class="kb-chip">人工智能</span>
@@ -100,15 +99,13 @@ tags:
   <span class="kb-chip">工具调用</span>
 </div>
 
-<!-- Hero：一句话掌握全片 -->
 <div class="kb-hero">
   <div class="kb-hero-label">一句话掌握全片</div>
   <div class="kb-hero-formula">Agent <span class="plus">=</span> LLM（大脑）<span class="plus">+</span> Harness（身体与护栏）</div>
   <p>Agent 是「会主动干活的人」，Harness 是「保证他靠谱干活的整套外壳机制」——两者缺一不可。</p>
 </div>
 
-<!-- ========== 知识点 1 ========== -->
-<h2 id="agent">知识点 1：什么是 Agent（智能体）</h2>
+<h2 id="agent">什么是 Agent（智能体）</h2>
 
 <ul>
   <li><b>定义</b>：能<b>自主完成目标的多步执行 AI 系统</b>，而不是「一问一答」的聊天机器人。</li>
@@ -123,8 +120,7 @@ tags:
   <div class="kb-card"><span class="kb-num">④</span><b>记忆反思</b><p>基于历史上下文调整策略</p></div>
 </div>
 
-<!-- ========== 知识点 2 ========== -->
-<h2 id="harness">知识点 2：什么是 Harness（缰绳 / 马具）</h2>
+<h2 id="harness">什么是 Harness（缰绳 / 马具）</h2>
 
 <div class="kb-def">
   <div class="kb-def-item">
@@ -142,8 +138,7 @@ tags:
   <div><b>模型决定 Agent 的「能力上限」，Harness 决定它的「稳定下限」与落地可行性。</b></div>
 </div>
 
-<!-- ========== 知识点 3 ========== -->
-<h2 id="why">知识点 3：为什么需要 Harness：裸 LLM 的四大问题</h2>
+<h2 id="why">为什么需要 Harness：裸 LLM 的四大问题</h2>
 
 <div class="kb-grid">
   <div class="kb-card kb-bad"><span class="kb-num">1</span><b>输出不可控</b><p>AI 经常「不听话」：不按指定格式输出、答非所问、偷懒（AI 比想象中更会偷懒）。</p></div>
@@ -152,8 +147,7 @@ tags:
   <div class="kb-card kb-bad"><span class="kb-num">4</span><b>安全隐患</b><p>无权限控制时，AI 可能改错文件、执行危险命令、访问不该访问的资源。</p></div>
 </div>
 
-<!-- ========== 知识点 4 ========== -->
-<h2 id="compose">知识点 4：Harness 的组成：Agent 背后的「隐形操作系统」</h2>
+<h2 id="compose">Harness 的组成：Agent 背后的「隐形操作系统」</h2>
 
 <div class="kb-grid">
   <div class="kb-card"><span class="kb-num">①</span><b>上下文管理</b><p>上下文拼装与压缩，防止上下文爆炸，控制成本。</p></div>
@@ -166,8 +160,7 @@ tags:
   <div class="kb-card"><span class="kb-num">⑧</span><b>日志审计</b><p>Log / Trace / 审计记录，可回放、可追溯、可人工介入。</p></div>
 </div>
 
-<!-- ========== 知识点 5 ========== -->
-<h2 id="loop">知识点 5：Agent 的运行机制：Agent Loop</h2>
+<h2 id="loop">Agent 的运行机制：Agent Loop</h2>
 
 <p><b>ReAct 范式</b>：思考 → 行动 → 观察 →（循环直到完成）</p>
 
@@ -189,8 +182,7 @@ tags:
   <li><b>护栏必备</b>：循环必须配轮次上限 / 预算 / 超时，否则就是「烧钱的无底洞」。</li>
 </ul>
 
-<!-- ========== 知识点 6 ========== -->
-<h2 id="tools">知识点 6：工具调用的两个关键概念（易混淆，重点避坑）</h2>
+<h2 id="tools">工具调用的两个关键概念（易混淆，重点避坑）</h2>
 
 <div class="kb-table-wrap">
   <table>
@@ -208,22 +200,21 @@ tags:
   <b>易错点</b>：MCP ≠ Function Calling（一个是协议标准层，一个是实现机制）；「调用外部工具 / 服务」≠「调用另一个 AI」。分清这三层，能避免大量争论。
 </div>
 
-<!-- ========== 知识点 7 ========== -->
-<h2 id="evo">知识点 7：工程范式的演进：Prompt → Context → Harness</h2>
+<h2 id="evo">工程范式的演进：Prompt → Context → Harness</h2>
 
 <div class="kb-timeline">
   <div class="kb-tl-item">
-    <span class="kb-tl-year">2023–2024</span><h3>Prompt Engineering</h3>
+    <span class="kb-tl-year">2023–2024</span><b>Prompt Engineering</b>
     <p class="kb-tl-q">核心问题：<b>怎么问</b></p>
     <p>提示词措辞、示例、角色设定。</p>
   </div>
   <div class="kb-tl-item">
-    <span class="kb-tl-year">2025</span><h3>Context Engineering</h3>
+    <span class="kb-tl-year">2025</span><b>Context Engineering</b>
     <p class="kb-tl-q">核心问题：<b>让 AI 看到什么</b></p>
     <p>上下文文档、相关信息注入。</p>
   </div>
   <div class="kb-tl-item">
-    <span class="kb-tl-year">2026 · 当下</span><h3>Harness Engineering</h3>
+    <span class="kb-tl-year">2026 · 当下</span><b>Harness Engineering</b>
     <p class="kb-tl-q">核心问题：<b>系统能预防 / 测量 / 修复什么</b></p>
     <p>外层工程机制：校验、约束、重试、预算、审计。</p>
   </div>
@@ -233,8 +224,7 @@ tags:
   三者是<b>层层叠加</b>而非替代：Prompt 管「怎么说」，Context 管「能看到什么」，Harness 管「系统如何兜底」。<b>Agent 做得好不好，关键看外层 Harness 能否预防错误、测量错误、修复错误。</b>
 </div>
 
-<!-- ========== 知识点 8 ========== -->
-<h2 id="practice">知识点 8：实战要点：让 Agent 靠谱落地的工程手段</h2>
+<h2 id="practice">实战要点：让 Agent 靠谱落地的工程手段</h2>
 
 <div class="kb-table-wrap">
   <table>
@@ -251,7 +241,6 @@ tags:
   </table>
 </div>
 
-<!-- ========== 核心结论速记 ========== -->
 <h2 id="conclusion">核心结论速记</h2>
 
 <div class="kb-conclusion">
@@ -264,7 +253,6 @@ tags:
   </ol>
 </div>
 
-<!-- ========== 来源 ========== -->
 <div class="kb-source">
   内容来源：B 站视频《Agent和Harness到底是什么？一个动画彻底搞懂！》（<a href="https://www.bilibili.com/video/BV1t55v6DE2v">BV1t55v6DE2v</a>，13:07）· UP 主：轩辕的编程宇宙 · 合集：《AI技术与AI产品分享》第 3 期
 </div>

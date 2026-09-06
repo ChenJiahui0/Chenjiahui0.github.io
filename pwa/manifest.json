@@ -3,6 +3,11 @@
   "short_name": "Hux Blog",
   "description": "About an engineer & designer who loves web.",
   "icons": [{
+    "src": "../img/logo.svg",
+    "sizes": "any",
+    "type": "image/svg+xml",
+    "purpose": "any"
+  }, {
     "src": "icons/128.png",
     "sizes": "128x128",
     "type": "image/png"
