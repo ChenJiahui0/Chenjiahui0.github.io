@@ -77,6 +77,7 @@ tags:
   <span class="kb-chip">语言模型</span>
   <span class="kb-chip">Flow Matching</span>
   <span class="kb-chip">arXiv 2605.10938</span>
+  <span class="kb-chip">视频精读</span>
 </div>
 
 <div class="kb-hero">
@@ -251,6 +252,21 @@ tags:
   <div class="kb-card kb-bad"><span class="kb-num">6</span><b>SDE 是近似实现</b><p>论文自述 SDE 采样器主要「捕获每步随机行为」，并非严格推导的 SDE 离散化。</p></div>
 </div>
 
+<h2 id="video">视频精读视角：怎样理解 ELF 的分量</h2>
+
+<p>《<b>提速32倍！何恺明语言模型处女作！ELF</b>》——B 站 UP 主 <b>Lau博士的云组会</b> 的论文精读（11:39），视频简介直接挂载了本论文与代码仓库。视频给出了几个「不搞扩散也能懂」的视角，恰好补足论文正文偏学术的表达：</p>
+
+<div class="kb-grid">
+  <div class="kb-card"><span class="kb-num">①</span><b>「提速 32 倍」怎么算的</b><p>离散基线 MDLM / Duo 通常要到 1024 步量级才拿 Gen. PPL 40~50；ELF 用 <b>32 步</b>就做到 24，步数少了约 32 倍。哪怕给基线加蒸馏（MDLM+SDTT 32 步 ≈ 30、Duo+DCD 32 步 ≈ 28），ELF 不蒸馏仍然更低。</p></div>
+  <div class="kb-card"><span class="kb-num">②</span><b>「处女作」的分量</b><p>何恺明（ResNet 之父）从 CV 转向生成模型，再到第一个语言模型就选了扩散这条<b>非自回归</b>路线——本身就是个值得留意的信号。</p></div>
+  <div class="kb-card"><span class="kb-num">③</span><b>「少即是多」</b><p>105M 参数 + 45B token + 32 步采样，却在<b>质量、速度、训练成本</b>三个维度同时赢——靠的是架构红利，不是堆料。</p></div>
+  <div class="kb-card"><span class="kb-num">④</span><b>「连续就是连续」</b><p>批评此前连续 DLM 老在连续表示与离散输出之间「反复横跳」；ELF 坚持全程连续、只在最后一步落词，把分层做到底。</p></div>
+</div>
+
+<div class="kb-callout">
+  <b>最直观的比喻（社区解读）</b>：人思考时用的是连续、模糊、多维的「概念」，表达时才落到离散、精确的「词语」。语言的离散性只存在于输出端，内部推理可以是连续的——ELF 恰好把这个直觉变成了网络结构。
+</div>
+
 <h2 id="takeaway">我的解读与速记</h2>
 
 <div class="kb-callout">
@@ -268,7 +284,7 @@ tags:
 </div>
 
 <div class="kb-source">
-  论文原文：ELF: Embedded Language Flows（<a href="https://arxiv.org/abs/2605.10938">arXiv:2605.10938</a>）· <a href="https://arxiv.org/html/2605.10938v2">HTML 全文</a> · <a href="https://github.com/lillian039/ELF">代码仓库</a> · 中文解读整理于 2026-09-07
+  参考：论文原文 <i>ELF: Embedded Language Flows</i>（<a href="https://arxiv.org/abs/2605.10938">arXiv:2605.10938</a>）· <a href="https://github.com/lillian039/ELF">代码仓库</a> · 视频解读：《提速32倍！何恺明语言模型处女作！ELF【论文精读】》（<a href="https://www.bilibili.com/video/BV1sGbH61EBf/">BV1sGbH61EBf</a>，Lau博士的云组会，11:39）· 社区解读：智柴网《ELF 深度拆解》· 中文整理于 2026-09-07
 </div>
 
 </div>
