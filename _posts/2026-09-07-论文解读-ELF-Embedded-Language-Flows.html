@@ -82,7 +82,7 @@ tags:
 
 <div class="kb-hero">
   <div class="kb-hero-label">一句话看懂这篇论文</div>
-  <div class="kb-hero-formula">ELF：全程在连续嵌入空间做 Flow Matching，<span class="plus">仅在最后一步</span>离散化成 token</div>
+  <div class="kb-hero-formula">ELF：全程在连续 embedding 空间做 Flow Matching，<span class="plus">仅在最后一步</span>离散化成 token</div>
   <p>连续扩散语言模型不是不行——只需对「离散化」做最少的处理，就能直接复用图像扩散的成熟工具箱（CFG、SDE 采样、自条件），用少得多的训练数据打平甚至反超主流离散扩散模型。</p>
 </div>
 
@@ -117,16 +117,16 @@ tags:
   <div>核心争论：连续 DLM 落后，到底是<b>语言本质是离散的</b>，还是只是<b>算法设计没被充分探索</b>？</div>
 </div>
 
-<p>ELF 的立场很直接：<b>连续扩散语言模型只需要对离散化做极简处理就能变得高效</b>——把扩散 / 流的全过程放在连续嵌入空间里跑，只在最后一步做「连续 → 离散」的映射。这样图像扩散领域积累的技术（classifier-free guidance、SDE 采样、自条件、训练期蒸馏等）几乎可以原样搬过来。</p>
+<p>ELF 的立场很直接：<b>连续扩散语言模型只需要对离散化做极简处理就能变得高效</b>——把扩散 / 流的全过程放在连续 embedding 空间里跑，只在最后一步做「连续 → 离散」的映射。这样图像扩散领域积累的技术（classifier-free guidance、SDE 采样、自条件、训练期蒸馏等）几乎可以原样搬过来。</p>
 
 <h2 id="method">方法：ELF 是怎么工作的</h2>
 
 <h3>三步流水线</h3>
 
 <div class="kb-flow">
-  <div class="kb-step"><b>离散 → 连续</b><small>token 经冻结的预训练 T5-small encoder（35M，512 维）编码为上下文嵌入</small></div>
+  <div class="kb-step"><b>离散 → 连续</b><small>token 经冻结的预训练 T5-small encoder（35M，512 维）编码为上下文 embedding</small></div>
   <div class="kb-arrow">→</div>
-  <div class="kb-step"><b>连续空间 Flow Matching</b><small>rectified flow 线性插值路径，x-prediction 直接预测干净嵌入</small></div>
+  <div class="kb-step"><b>连续空间 Flow Matching</b><small>rectified flow 线性插值路径，x-prediction 直接预测干净 embedding</small></div>
   <div class="kb-arrow">→</div>
   <div class="kb-goal"><b>末步离散化</b><small>t=1 时同一权重网络切到 decode 模式，共享 unembedding 矩阵映射 logits，交叉熵训练</small></div>
 </div>
@@ -135,7 +135,7 @@ tags:
 <div class="kb-def">
   <div class="kb-def-item">
     <span class="kb-word">Embedding 空间</span>
-    <p>ELF 的「世界」是 T5 编码出的连续向量场，模型在里面学「如何把噪声流到干净的嵌入」。</p>
+    <p>ELF 的「世界」是 T5 编码出的连续向量场，模型在里面学「如何把噪声流到干净的 embedding」。</p>
   </div>
   <div class="kb-def-item">
     <span class="kb-word">Flow Matching</span>
@@ -143,7 +143,7 @@ tags:
   </div>
   <div class="kb-def-item">
     <span class="kb-word">x-prediction</span>
-    <p>直接预测「干净嵌入」而非速度 v 或噪声 ε——对高维表示更稳定，也和末步「预测离散 token」的目标自然对齐。</p>
+    <p>直接预测「干净 embedding」而非速度 v 或噪声 ε——对高维表示更稳定，也和末步「预测离散 token」的目标自然对齐。</p>
   </div>
   <div class="kb-def-item">
     <span class="kb-word">共享权重解码</span>
@@ -232,7 +232,7 @@ tags:
 
 <ul>
   <li><b>CFG</b>：scale 增大 → PPL 更低但多样性（entropy）下降，存在质量—多样性权衡；无条件最优约 scale=3，条件生成最优约 scale=2。</li>
-  <li><b>嵌入来源</b>：预训练 T5 上下文嵌入最佳；从零训练的 encoder 略逊；非上下文 / 可学习嵌入明显差。</li>
+  <li><b>embedding 来源</b>：预训练 T5 上下文 embedding 最佳；从零训练的 encoder 略逊；非上下文 / 可学习 embedding 明显差。</li>
   <li><b>预测目标</b>：<code>x-prediction</code> 在 512/768/1024 维都稳定；<code>v-prediction</code> 高维退化；<code>ε-prediction</code> 全面崩溃。</li>
   <li><b>采样器</b>：少步数（8/16/32）下 SDE 显著优于 ODE——减少误差累积。</li>
   <li><b>解码策略</b>：共享权重 denoiser-decoder ≈ 独立 decoder，但更简单且在低 PPL 区延伸更远。</li>
@@ -245,7 +245,7 @@ tags:
 
 <div class="kb-grid">
   <div class="kb-card kb-bad"><span class="kb-num">1</span><b>极少数步仍困难</b><p>8 步以下质量明显退化；1–4 步的高质量生成依赖渐进蒸馏（ELF+PD）来弥补。</p></div>
-  <div class="kb-card kb-bad"><span class="kb-num">2</span><b>依赖预训练表征</b><p>默认用预训练 T5 encoder，其质量直接决定 ELF 的上限；scratch / 非上下文嵌入都不如它。</p></div>
+  <div class="kb-card kb-bad"><span class="kb-num">2</span><b>依赖预训练表征</b><p>默认用预训练 T5 encoder，其质量直接决定 ELF 的上限；scratch / 非上下文 embedding 都不如它。</p></div>
   <div class="kb-card kb-bad"><span class="kb-num">3</span><b>规模与任务有限</b><p>最大仅 652M；任务集中在 OWT、WMT14、XSum，未覆盖更大模型、代码或多模态。</p></div>
   <div class="kb-card kb-bad"><span class="kb-num">4</span><b>超参偏经验性</b><p>多条噪声 schedule、80/20 分支比例、CE 权重等都靠调参，缺少理论解释。</p></div>
   <div class="kb-card kb-bad"><span class="kb-num">5</span><b>未报精确似然</b><p>只用了 GPT-2 的 generative perplexity 与 entropy 评估，flow 模型的精确对数似然评估成本高，未覆盖。</p></div>
