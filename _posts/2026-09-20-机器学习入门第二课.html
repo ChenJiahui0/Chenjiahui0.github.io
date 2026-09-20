@@ -1,0 +1,502 @@
+---
+title: 机器学习入门第二课：从一条直线到「是不是」，四讲把南瓜价格讲到 97%
+layout: post
+author: 陈家辉
+tags:
+  - 人工智能
+  - 机器学习
+  - 回归分析
+  - Scikit-learn
+  - 学习笔记
+---
+
+<style>
+/* ========== 文章美化样式（作用域限定在 .kb-article 内，避免影响全局） ========== */
+.kb-article{line-height:1.9;font-size:16px}
+.kb-article h2{font-size:1.45em;margin:2.2em 0 .8em;padding-bottom:.35em;border-bottom:2px solid #eef0f6;color:#1f2430;position:relative;font-weight:700}
+.kb-article h3{font-size:1.15em;margin:1.6em 0 .6em;color:#333a4b;font-weight:700}
+.kb-article p{margin:.6em 0 1em}
+.kb-article ul,.kb-article ol{padding-left:1.4em;margin:.6em 0 1.1em}
+.kb-article li{margin:.35em 0}
+/* 顶部元信息 */
+.kb-meta{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:#f5f7fb;border:1px solid #e7ecf5;border-radius:10px;padding:10px 16px;margin:0 0 26px;color:#5a6478;font-size:.92em}
+.kb-chip{background:#e8effd;color:#2b5fd9;border-radius:20px;padding:2px 12px;font-size:.85em;white-space:nowrap}
+/* Hero 核心结论卡 */
+.kb-hero{background:linear-gradient(135deg,#0d9488 0%,#2563eb 55%,#7c3aed 100%);color:#fff;border-radius:16px;padding:30px 28px;margin:6px 0 26px;box-shadow:0 12px 30px rgba(37,99,235,.28);text-align:center}
+.kb-hero .kb-hero-label{font-size:.85em;letter-spacing:4px;opacity:.85;margin-bottom:12px;font-weight:600}
+.kb-hero .kb-hero-formula{font-size:clamp(1.15rem,2.4vw,1.7rem);font-weight:800;line-height:1.5;margin:0 0 14px}
+.kb-hero .kb-hero-formula .plus{color:#ffe08a;margin:0 8px}
+.kb-hero p{margin:0;font-size:.98em;opacity:.95;max-width:760px;margin:0 auto}
+/* 章节入口条（非标题） */
+.kb-lead{display:flex;align-items:center;gap:14px;background:#fbfcff;border:1px solid #e8edf8;border-radius:12px;padding:16px 18px;margin:1.4em 0}
+.kb-lead .kb-icon{flex:none;width:44px;height:44px;border-radius:50%;background:#e8effd;color:#2b5fd9;font-weight:800;font-size:1.15em;display:flex;align-items:center;justify-content:center}
+.kb-lead b{color:#2b5fd9}
+/* 定义卡 */
+.kb-def{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin:1em 0 1.4em}
+.kb-def-item{background:#fafbfe;border:1px solid #e9edf6;border-left:4px solid #4f6ef7;border-radius:10px;padding:16px 18px}
+.kb-def-item h3{margin:0 0 8px;font-size:1.05em}
+.kb-def-item .kb-word{font-weight:700;color:#4f6ef7;font-size:1.12em;display:block;margin-bottom:4px}
+.kb-def-item p{margin:0;font-size:.95em}
+/* 卡片网格 */
+.kb-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin:1em 0 1.4em}
+.kb-grid .kb-card{background:#fff;border:1px solid #e7ebf4;border-radius:12px;padding:16px 16px 14px;transition:transform .15s ease,box-shadow .15s ease}
+.kb-grid .kb-card:hover{transform:translateY(-3px);box-shadow:0 8px 20px rgba(31,45,120,.10)}
+.kb-grid .kb-card .kb-num{display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:30px;border-radius:9px;background:#eef2ff;color:#3d5bf5;font-weight:800;font-size:.92em;margin-bottom:8px;padding:0 8px}
+.kb-grid .kb-card b{display:block;font-size:1em;margin-bottom:4px}
+.kb-grid .kb-card p{margin:0;font-size:.93em;color:#4b5568}
+.kb-grid .kb-card.kb-bad .kb-num{background:#fef1f1;color:#d64550}
+.kb-grid .kb-card.kb-bad b{color:#d64550}
+/* 表格 */
+.kb-table-wrap{overflow-x:auto;margin:1em 0 1.4em;border-radius:12px;border:1px solid #e7ebf4}
+.kb-table-wrap table{width:100%;border-collapse:collapse;background:#fff;font-size:.95em;margin:0}
+.kb-table-wrap thead th{background:#f0f4ff;color:#1f2d5c;font-weight:700;text-align:left;padding:11px 16px;white-space:nowrap;border-bottom:2px solid #dbe4fb}
+.kb-table-wrap tbody td{padding:11px 16px;border-bottom:1px solid #eef1f7;vertical-align:top;color:#3a4152}
+.kb-table-wrap tbody tr:last-child td{border-bottom:none}
+.kb-table-wrap tbody tr:nth-child(even){background:#fafbfe}
+.kb-table-wrap tbody tr:hover{background:#f3f6ff}
+.kb-table-wrap code{background:#f0f2f7;color:#c7254e;border-radius:4px;padding:1px 6px;font-size:.92em}
+/* 流程条 */
+.kb-flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:8px;justify-content:center;background:#f8f9fd;border:1px dashed #cdd6ea;border-radius:14px;padding:20px 16px;margin:1.2em 0}
+.kb-flow .kb-step{flex:1 1 150px;max-width:200px;background:#fff;border:1px solid #dfe5f2;border-radius:10px;padding:12px 10px;text-align:center}
+.kb-flow .kb-step b{display:block;font-size:.92em;color:#22315f;margin-bottom:2px}
+.kb-flow .kb-step small{color:#7b8396;font-size:.8em;line-height:1.4;display:block}
+.kb-flow .kb-arrow{display:flex;align-items:center;color:#4f6ef7;font-weight:800;font-size:1.2em;padding:0 2px}
+.kb-flow .kb-goal{flex:1 1 150px;max-width:200px;background:linear-gradient(135deg,#22c55e,#16a34a);border:none;border-radius:10px;padding:12px 10px;text-align:center;color:#fff}
+.kb-flow .kb-goal b{display:block;font-size:.92em;margin-bottom:2px}
+.kb-flow .kb-goal small{font-size:.8em;opacity:.92;display:block;line-height:1.4}
+.kb-flow-note{text-align:center;color:#7b8396;font-size:.85em;margin:-.4em 0 1.4em}
+/* 引用 callout */
+.kb-callout{background:#fff7ea;border:1px solid #ffe0b0;border-left:4px solid #f5a623;border-radius:10px;padding:12px 16px;margin:1.2em 0;font-size:.95em;color:#5a4a1f}
+.kb-callout b{color:#b26a00}
+.kb-callout.kb-warn{background:#fff1f1;border-color:#ffd0d0;border-left-color:#e5484d;color:#5c2b2b}
+.kb-callout.kb-warn b{color:#c02a2a}
+/* 代码块 */
+.kb-code-wrap{position:relative;margin:1em 0 1.4em}
+.kb-code-wrap .kb-code-lang{position:absolute;top:0;right:0;background:#e6ebfb;color:#3d5bf5;font-size:.75em;font-weight:700;padding:2px 10px;border-radius:0 10px 0 10px;letter-spacing:.5px}
+.kb-article pre{background:#1f2430;color:#e6edf3;border-radius:10px;padding:18px 20px 16px;overflow-x:auto;margin:0;font-size:.88em;line-height:1.7;font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace}
+.kb-article pre code{background:none;color:inherit;padding:0;border-radius:0;font-size:1em;white-space:pre}
+.kb-article code{background:#f0f2f7;color:#c7254e;border-radius:4px;padding:1px 6px;font-size:.92em}
+/* 结论列表 */
+.kb-conclusion{background:#f6f8ff;border:1px solid #dde6ff;border-radius:14px;padding:20px 20px 8px;margin:1.2em 0}
+.kb-conclusion ol{margin:0;padding-left:0;list-style:none;counter-reset:concl}
+.kb-conclusion li{counter-increment:concl;position:relative;padding:6px 0 10px 44px;border-bottom:1px dashed #e2e9fb}
+.kb-conclusion li:last-child{border-bottom:none}
+.kb-conclusion li::before{content:counter(concl);position:absolute;left:0;top:8px;width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#4f6ef7,#9b3df0);color:#fff;font-weight:800;font-size:.95em;display:flex;align-items:center;justify-content:center}
+.kb-conclusion b{color:#27409e}
+/* 来源 */
+.kb-source{margin-top:2em;padding:14px 18px;background:#f8f9fb;border-left:3px solid #c8d2e8;border-radius:0 8px 8px 0;font-size:.9em;color:#6b7280}
+.kb-source a{color:#4f6ef7;text-decoration:none}
+@media (max-width:767px){.kb-flow .kb-arrow{transform:rotate(90deg);padding:2px 0}.kb-hero{padding:22px 16px}}
+</style>
+
+<div class="kb-article">
+
+<div class="kb-meta">
+  <span>读书笔记 · 微软 ML for Beginners 第二模块（Regression）四讲归纳</span>
+  <span class="kb-chip">线性回归</span>
+  <span class="kb-chip">多项式回归</span>
+  <span class="kb-chip">逻辑回归</span>
+  <span class="kb-chip">Scikit-learn</span>
+  <span class="kb-chip">南瓜市场 🎃</span>
+</div>
+
+<div class="kb-hero">
+  <div class="kb-hero-label">一句话掌握全篇</div>
+  <div class="kb-hero-formula">线性回归 <span class="plus">+</span> 多项式回归 <span class="plus">→</span> 「是多少」<br>逻辑回归 <span class="plus">→</span> 「是不是」</div>
+  <p>回归的全部目的是找<strong>变量之间的关系</strong>；而把「关系」变成「能上线拍板的模型」，中间隔着数据清洗、编码与评估这三道工序。</p>
+</div>
+
+<p>上一模块我们把「什么是机器学习」的概念坐标立住了。这一模块直接进入动手环节：四讲跑下来，同一个<a href="https://www.marketnews.usda.gov/mnp/fv-report-config-step1?type=termPrice">美国农业部南瓜市场数据集</a>，从画散点图开始，一路做到「用所有特征预测价格，决定系数 0.97」和「判断一个南瓜是不是白色（幽灵南瓜 👻）」。中间踩的坑比想象的多，也远比看代码本身有价值。</p>
+
+<h2 id="tools">一、磨刀：环境、Scikit-learn 与第一个线性回归</h2>
+
+<p>第一讲只有两件事：<strong>把工具装好</strong>，<strong>跑通第一个 <code>model.fit()</code></strong>。</p>
+
+<div class="kb-flow">
+  <div class="kb-step"><b>Python</b><small>建议配虚拟环境，隔离依赖</small></div>
+  <div class="kb-arrow">→</div>
+  <div class="kb-step"><b>VS Code</b><small>配 Python 扩展</small></div>
+  <div class="kb-arrow">→</div>
+  <div class="kb-step"><b>Jupyter 笔记本</b><small><code>.ipynb</code>，数据科学标配</small></div>
+  <div class="kb-arrow">→</div>
+  <div class="kb-goal"><b>Scikit-learn</b><small>传统机器学习主力库</small></div>
+</div>
+<p class="kb-flow-note">笔记本的价值在于「代码 + 注释 + 图」三件事放在同一个文件里，天然适合实验</p>
+
+<h3>第一个模型：用 BMI 预测糖尿病进展</h3>
+
+<p>课程选了 Scikit-learn 内置的糖尿病数据集：<strong>442 个样本、10 个特征</strong>（age、sex、bmi、bp、s1~s6）。特征已经做过中心化与缩放，所以数值很小且均值为 0。核心代码只有六步：</p>
+
+<div class="kb-code-wrap">
+  <span class="kb-code-lang">python</span>
+  <pre><code>import matplotlib.pyplot as plt
+import numpy as np
+from sklearn import datasets, linear_model, model_selection
+
+X, y = datasets.load_diabetes(return_X_y=True)   # (442, 10)
+
+X = X[:, 2]                # 取第 3 列 = BMI
+X = X.reshape((-1, 1))     # 关键：线性回归要求二维输入
+
+X_train, X_test, y_train, y_test = model_selection.train_test_split(X, y, test_size=0.33)
+
+model = linear_model.LinearRegression()
+model.fit(X_train, y_train)
+y_pred = model.predict(X_test)
+
+plt.scatter(X_test, y_test, color='black')
+plt.plot(X_test, y_pred, color='blue', linewidth=3)</code></pre>
+</div>
+
+<div class="kb-callout">
+  这里藏着两个新手必踩的点：<b>① <code>X[:, 2]</code> 切出来是一维</b>，必须用 <code>reshape(-1, 1)</code> 变回 <code>N × 1</code>，否则 <code>fit</code> 会报错；<b>② 这种按比例切训练/测试集的做法叫「留出法」（Hold-out validation）</b>，33% 的测试集是模型从未见过的数据——在训练集上自测是作弊，分数必虚高。
+</div>
+
+<p>还有一个容易忽略的小建议：<code>train_test_split(X, y, test_size=0.33, random_state=42)</code> 固定随机种子，结果才可复现；分类任务再加 <code>stratify=y</code>，保证切分后各类别比例和原始数据一致。</p>
+
+<h2 id="data">二、真实数据很脏：南瓜数据集的清洗与可视化</h2>
+
+<p>第二讲开始就换成了真实的南瓜市场数据，<strong>1757 行、按城市分组</strong>。它的真实感非常强：有空值、有字符串和数字混排，还有一个内容五花八门的 <code>Package</code> 列（sacks、bins、inch、each、per bin……）。</p>
+
+<div class="kb-flow">
+  <div class="kb-step"><b>head / isnull</b><small>先看形、再看缺失</small></div>
+  <div class="kb-arrow">→</div>
+  <div class="kb-step"><b>loc 选列</b><small>只留 Package / Low / High / Date</small></div>
+  <div class="kb-arrow">→</div>
+  <div class="kb-step"><b>算 Price</b><small>(Low + High) / 2</small></div>
+  <div class="kb-arrow">→</div>
+  <div class="kb-step"><b>抽 Month</b><small>DatetimeIndex(...).month</small></div>
+  <div class="kb-arrow">→</div>
+  <div class="kb-goal"><b>过滤 + 归一化</b><small>只留 bushel，统一到每蒲式耳价</small></div>
+</div>
+<p class="kb-flow-note">清洗之后只剩约 400 行数据，且集中在秋季几个月 —— 这就是真实数据的代价</p>
+
+<h3>两次「等等，还有点怪」</h3>
+
+<div class="kb-grid">
+  <div class="kb-card kb-bad"><span class="kb-num">1</span><b>计量单位不统一</b><p>南瓜按个卖、按磅卖、按箱卖。<code>Unit of Sale</code> 为 EACH / PER BIN 的不可比，于是只保留 <code>Package</code> 中含 <code>bushel</code> 的行，剩约 415 行。</p></div>
+  <div class="kb-card kb-bad"><span class="kb-num">2</span><b>每行的「一筐」不一样</b><p>同样是 bushel，还有 <code>1 1/9</code> 和 <code>1/2</code> 两种规格，必须按体积把价格换算成「每 1 bushel 单价」，否则模型在学单位而不是学行情。</p></div>
+</div>
+
+<div class="kb-code-wrap">
+  <span class="kb-code-lang">python</span>
+  <pre><code>pumpkins = pumpkins[pumpkins['Package'].str.contains('bushel', case=True, regex=True)]
+
+price = (pumpkins['Low Price'] + pumpkins['High Price']) / 2
+month = pd.DatetimeIndex(pumpkins['Date']).month
+
+new_pumpkins = pd.DataFrame({'Month': month, 'Package': pumpkins['Package'],
+                             'Low Price': pumpkins['Low Price'],
+                             'High Price': pumpkins['High Price'], 'Price': price})
+
+new_pumpkins.loc[new_pumpkins['Package'].str.contains('1 1/9'), 'Price'] = price / (1 + 1/9)
+new_pumpkins.loc[new_pumpkins['Package'].str.contains('1/2'),   'Price'] = price / (1/2)</code></pre>
+</div>
+
+<div class="kb-callout">
+  <b>一个很有意思的结论</b>：半 bushel 装的南瓜反而更贵。原因是小南瓜单价高——同样体积里小南瓜装得更多，而大南瓜中空、占的多是无用空间。<b>这就是「为什么要理解数据性质」的最好例子</b>：不懂业务，这一步的归一化你可能根本想不到要做。
+</div>
+
+<h3>可视化的意义：一张图值一百行代码</h3>
+
+<div class="kb-table-wrap">
+  <table>
+    <thead>
+      <tr><th scope="col">图</th><th scope="col">结论</th><th scope="col">评价</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>plt.scatter(price, month)</code></td><td>只看到某月的数据点在某个区间铺开</td><td>几乎<b>没有信息量</b></td></tr>
+      <tr><td><code>groupby(['Month'])['Price'].mean().plot(kind='bar')</code></td><td><b>9 月、10 月价格最高</b>（万圣节效应）</td><td>有用，一眼看出趋势</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="kb-callout">
+  可视化不只是为了好看，它还决定了<b>该选哪类模型</b>：点沿着一条线分布 → 适合线性回归；点明显弯曲 → 考虑多项式；分成几簇 → 大概率有类别特征在起作用。
+</div>
+
+<h2 id="linear">三、线性回归与多项式回归：从最小二乘做到 0.97</h2>
+
+<div class="kb-lead">
+  <div class="kb-icon">∫</div>
+  <div><b>这一讲是四讲里分量最重的：它把「回归是怎么算出来的」讲清楚了。</b></div>
+</div>
+
+<h3>最小二乘：为什么要把误差平方</h3>
+
+<p>线性回归的目标是画一条直线，既能显示变量关系，又能预测新点落在直线的哪里。画这条线最常用的方法是<strong>最小二乘回归</strong>——把每个点到直线的垂直距离（残差）处理后再求和，找到使总和最小的那条线。之所以要平方，有两个理由：</p>
+
+<div class="kb-grid">
+  <div class="kb-card"><span class="kb-num">1</span><b>只看大小，不看方向</b><p>误差 −5 和 +5 应当等权，平方后全部为正。</p></div>
+  <div class="kb-card"><span class="kb-num">2</span><b>重点惩罚离群值</b><p>平方放大了大误差的权重，迫使直线靠近那些「离得特别远」的点。</p></div>
+</div>
+
+<p>这条线的形态就是中学那条：<code>Y = a + bX</code>，<code>b</code> 是斜率、<code>a</code> 是截距。</p>
+
+<h3>先看相关性，再谈模型</h3>
+
+<div class="kb-table-wrap">
+  <table>
+    <thead>
+      <tr><th scope="col">关系</th><th scope="col">相关系数</th><th scope="col">解读</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>Month</code> vs <code>Price</code></td><td>约 −0.15</td><td>极弱，月份几乎解释不了价格</td></tr>
+      <tr><td><code>DayOfYear</code> vs <code>Price</code></td><td>约 −0.17</td><td>换成更细粒度也没救回来</td></tr>
+      <tr><td><code>DayOfYear</code> vs <code>Price</code>（只取 PIE TYPE）</td><td>约 −0.27</td><td>控制变量后有提升，可以试模型了</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<p>按品种上色重画散点图（四个品种四种颜色）之后，谜底揭晓：<strong>价格呈现明显的分簇，起决定作用的是「品种」而不是「日期」。</strong></p>
+
+<h3>简单线性回归：三行代码，一个残酷的结论</h3>
+
+<div class="kb-code-wrap">
+  <span class="kb-code-lang">python</span>
+  <pre><code>from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error
+from sklearn.model_selection import train_test_split
+
+X = pie_pumpkins['DayOfYear'].to_numpy().reshape(-1, 1)
+y = pie_pumpkins['Price']
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
+
+lin_reg = LinearRegression()
+lin_reg.fit(X_train, y_train)
+
+pred  = lin_reg.predict(X_test)
+rmse  = np.sqrt(mean_squared_error(y_test, pred))
+score = lin_reg.score(X_train, y_train)</code></pre>
+</div>
+
+<div class="kb-table-wrap">
+  <table>
+    <thead>
+      <tr><th scope="col">看什么</th><th scope="col">代码 / 值</th><th scope="col">含义</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><b>斜率</b></td><td><code>coef_</code> ≈ −0.017</td><td>每过一天价格约降 2 分钱，非常微弱</td></tr>
+      <tr><td><b>截距</b></td><td><code>intercept_</code> ≈ 21</td><td>年初的参考价格</td></tr>
+      <tr><td><b>RMSE</b></td><td>2.77（17.2%）</td><td>预测值与真实值的典型偏差，越接近 0 越好</td></tr>
+      <tr><td><b>决定系数 R²</b></td><td>0.07</td><td>0 = 等于瞎猜均值，1 = 完美。0.07 基本不可用</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="kb-callout">
+  <b>线性回归对空值极其敏感</b>：训练前务必 <code>dropna()</code>，或用对应列的均值填充。这一步偷懒，后面全是白忙。
+</div>
+
+<h3>多项式回归：给直线加一个平方项</h3>
+
+<p>有些关系天然不是直线（价格会随时间波动，甚至存在极小值）。多项式回归是把输入扩维后再做<b>线性回归</b>，配合 Scikit-learn 的 pipeline 用起来非常干净：</p>
+
+<div class="kb-code-wrap">
+  <span class="kb-code-lang">python</span>
+  <pre><code>from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import PolynomialFeatures
+
+pipeline = make_pipeline(PolynomialFeatures(2), LinearRegression())
+pipeline.fit(X_train, y_train)
+
+# 画平滑曲线：不要用乱序的测试数据直接 plot，否则是锯齿
+X_range = np.linspace(X_test.min(), X_test.max(), 100).reshape(-1, 1)
+y_range = pipeline.predict(X_range)
+
+plt.scatter(X_test, y_test)
+plt.plot(X_range, y_range)</code></pre>
+</div>
+
+<p><code>PolynomialFeatures(2)</code> 表示把所有二阶项加进来：单变量时是 <code>X²</code>；两变量 X、Y 时会补出 <code>X², XY, Y²</code>。结果 RMSE 2.73、R² 0.08——<strong>略有改善，但仍然不行</strong>。结论很直接：<em>「我们需要考虑更多特征」</em>。</p>
+
+<h3>分类特征：独热编码把 R² 从 0.08 拉到 0.94</h3>
+
+<p><code>Variety</code> 这种字符串列叫<strong>分类变量</strong>，必须先<strong>编码</strong>成数值。两种做法差别巨大：</p>
+
+<div class="kb-def">
+  <div class="kb-def-item">
+    <span class="kb-word">数字编码 cat.codes ✗</span>
+    <p>给品种编 0/1/2/3。线性回归会把编号当<b>连续量</b>加权，等于偷偷假设「编号越大价格越高」。</p>
+  </div>
+  <div class="kb-def-item">
+    <span class="kb-word">独热编码 get_dummies ✓</span>
+    <p>每个品种一列，属于就填 1、否则填 0。每个品种配一个<b>独立系数</b>，代表它的「附加价」，不引入虚假顺序。</p>
+  </div>
+</div>
+
+<div class="kb-code-wrap">
+  <span class="kb-code-lang">python</span>
+  <pre><code>X = pd.get_dummies(new_pumpkins['Variety']) \
+        .join(new_pumpkins['Month']) \
+        .join(pd.get_dummies(new_pumpkins['City'])) \
+        .join(pd.get_dummies(new_pumpkins['Package']))
+y = new_pumpkins['Price']
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
+pipeline = make_pipeline(PolynomialFeatures(2), LinearRegression())
+pipeline.fit(X_train, y_train)</code></pre>
+</div>
+
+<div class="kb-table-wrap">
+  <table>
+    <thead>
+      <tr><th scope="col">模型</th><th scope="col">RMSE</th><th scope="col">决定系数</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>DayOfYear</code> 线性</td><td>2.77（17.2%）</td><td>0.07</td></tr>
+      <tr><td><code>DayOfYear</code> 多项式</td><td>2.73（17.0%）</td><td>0.08</td></tr>
+      <tr><td><code>Variety</code> 线性</td><td>5.24（19.7%）</td><td>0.77</td></tr>
+      <tr><td><b>所有特征 线性</b></td><td>2.84（10.5%）</td><td><b>0.94</b></td></tr>
+      <tr><td><b>所有特征 多项式</b></td><td><b>2.23（8.25%）</b></td><td><b>0.97</b></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="kb-callout">
+  <b>这张表就是本讲的灵魂</b>：算法换得更花哨（线性 → 多项式）几乎没用；把<b>对的特征加进来</b>（品种、城市、包装）才让决定系数从 0.07 跳到 0.94。<b>特征工程的收益远大于换算法。</b>
+</div>
+
+<h2 id="logistic">四、逻辑回归：名字叫回归，干的却是分类</h2>
+
+<p>第四讲换个问法：不再是「南瓜多少钱」，而是「<strong>这个南瓜是白色的（幽灵南瓜）还是不是？</strong>」——这就是二元分类。之所以放在回归章里讲，只是因为「逻辑回归」这个名字里带回归；它本质是一种<strong>基于线性的分类方法</strong>。</p>
+
+<h3>它和线性回归的三个关键差别</h3>
+
+<div class="kb-grid">
+  <div class="kb-card"><span class="kb-num">1</span><b>输出不同</b><p>线性回归输出连续值（价格涨多少）；逻辑回归输出<b>类别</b>（白色 / 非白色）。</p></div>
+  <div class="kb-card"><span class="kb-num">2</span><b>不要求变量相关</b><p>线性回归在变量相关性高时效果更好；逻辑回归<b>恰恰相反</b>，适合相关性弱的数据。</p></div>
+  <div class="kb-card"><span class="kb-num">3</span><b>需要大量干净数据</b><p>数据越多越准。课程用的数据集只有约 1000 行，并不理想，但足够演示。</p></div>
+</div>
+
+<div class="kb-lead">
+  <div class="kb-icon">S</div>
+  <div><b>底层数学：逻辑回归用 Sigmoid 函数把一个实数压到 (0, 1)，> 0.5 判为「1」，否则判为「0」。这条 S 形曲线也叫逻辑曲线。</b></div>
+</div>
+
+<h3>把字符串数据喂给机器：三种编码器</h3>
+
+<div class="kb-table-wrap">
+  <table>
+    <thead>
+      <tr><th scope="col">编码器</th><th scope="col">适用</th><th scope="col">课程中的用法</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><b>OrdinalEncoder</b></td><td><b>有序</b>类别</td><td><code>Item Size</code>：sml → med → med-lge → lge → xlge → jbo → exjbo</td></tr>
+      <tr><td><b>OneHotEncoder</b></td><td><b>无序</b>类别</td><td><code>City Name</code> / <code>Package</code> / <code>Variety</code> / <code>Origin</code></td></tr>
+      <tr><td><b>LabelEncoder</b></td><td>标签（y）</td><td><code>Color</code> 编码成 0 / 1</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<p>再用 <code>ColumnTransformer</code> 把「不同列用不同编码器」合并成一个步骤，避免训练和预测阶段各写各的导致不一致：</p>
+
+<div class="kb-code-wrap">
+  <span class="kb-code-lang">python</span>
+  <pre><code>ct = ColumnTransformer(transformers=[
+        ('ord', ordinal_encoder, ordinal_features),
+        ('cat', categorical_encoder, categorical_features)
+     ])
+ct.set_output(transform='pandas')
+encoded_features = ct.fit_transform(pumpkins)
+
+encoded_label = LabelEncoder().fit_transform(pumpkins['Color'])
+encoded_pumpkins = encoded_features.assign(Color=encoded_label)</code></pre>
+</div>
+
+<div class="kb-callout">
+  <b>本讲还换了可视化库 Seaborn</b>（构建于 Matplotlib 之上）：<code>catplot</code> 看「品种 × 颜色」的分布，箱线 + 分布图看 <code>Item Size</code> 与颜色的关系，<code>swarmplot</code>（蜂群图）看二元类别下数值的散点分布。<b>分类问题优先用 Seaborn，比纯 Matplotlib 省很多事。</b>
+</div>
+
+<h3>评估：别只看准确率</h3>
+
+<div class="kb-code-wrap">
+  <span class="kb-code-lang">python</span>
+  <pre><code>model = LogisticRegression()
+model.fit(X_train, y_train)
+predictions = model.predict(X_test)
+print(classification_report(y_test, predictions))
+print('F1-score: ', f1_score(y_test, predictions))
+confusion_matrix(y_test, predictions)</code></pre>
+</div>
+
+<p>课程跑出来的分类报告：<strong>准确率 92%</strong>，看起来不错；但白色这一类（support 33）的召回率只有 <strong>0.67</strong>、F1 只有 <strong>0.75</strong>。混淆矩阵把这层伪装撕开了：</p>
+
+<div class="kb-table-wrap">
+  <table>
+    <thead>
+      <tr><th scope="col"></th><th scope="col">预测 = 非白 (0)</th><th scope="col">预测 = 白 (1)</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><b>实际 = 非白 (0)</b></td><td>TN = 162</td><td>FP = 4</td></tr>
+      <tr><td><b>实际 = 白 (1)</b></td><td>FN = 11</td><td>TP = 22</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="kb-callout kb-warn">
+  <b>类别不平衡时，准确率会骗人。</b>本例中白色样本只占测试集 199 条中的 33 条，模型哪怕全猜「非白」也能拿到 83% 准确率——比 92% 只低一点，却毫无用处。这时应该盯住<b>精确率、召回率、F1</b>。
+</div>
+
+<div class="kb-grid">
+  <div class="kb-card"><span class="kb-num">P</span><b>精确率 Precision</b><p><code>TP / (TP + FP)</code> = 22/26 ≈ 0.85。判为白色的里面，真白的比例。</p></div>
+  <div class="kb-card"><span class="kb-num">R</span><b>召回率 Recall</b><p><code>TP / (TP + FN)</code> = 22/33 ≈ 0.67。真白的里面，被找出来的比例。</p></div>
+  <div class="kb-card"><span class="kb-num">F1</span><b>F1 分数</b><p>两者的调和平均 ≈ 0.75。<b>不想漏掉正例，就要盯着召回率调。</b></p></div>
+  <div class="kb-card"><span class="kb-num">AUC</span><b>ROC / AUC</b><p>用 <code>predict_proba</code> 画 ROC 曲线，希望曲线尽早越过中线；本例 AUC ≈ <b>0.975</b>，相当不错。</p></div>
+</div>
+
+<h2 id="pitfalls">五、踩坑清单：这四讲我实际报错过的地方</h2>
+
+<div class="kb-conclusion">
+  <ol>
+    <li><b>X 必须二维。</b><code>X[:, 2]</code> 或 <code>Series.to_numpy()</code> 取出来都是一维，要 <code>reshape(-1, 1)</code>，否则 <code>fit</code> 直接报错。</li>
+    <li><b>独热编码之后别再套用到单变量的代码上。</b><code>pd.get_dummies</code> 在新版 pandas 里返回 <b>bool</b> 列，而 <code>np.linspace(X_test.min(), X_test.max(), 100)</code> 需要数值标量，于是报 <code>TypeError: numpy boolean subtract</code>。多特征时这条 <code>np.linspace</code> 的一维曲线本来也没意义，应该改成画「预测值 vs 真实值」散点图。</li>
+    <li><b>DataFrame 上的 min/max 不是标量。</b><code>X_test.min()</code> 返回的是逐列的 Series，取单列请用 <code>X_test['DayOfYear'].min()</code>，必要时 <code>.astype(float)</code>。</li>
+    <li><b>训练集 / 测试集要同一套编码。</b>两遍各跑一次 <code>get_dummies</code> 可能列不一致；工程上用 <code>OneHotEncoder</code> / <code>ColumnTransformer</code> 先 <code>fit</code> 再 <code>transform</code>。</li>
+    <li><b>线性回归怕空值。</b>训练前先 <code>dropna()</code> 或均值填充，别指望模型替你兜底。</li>
+  </ol>
+</div>
+
+<h2 id="cheatsheet">六、速查：三种回归该怎么选</h2>
+
+<div class="kb-table-wrap">
+  <table>
+    <thead>
+      <tr><th scope="col">类型</th><th scope="col">回答什么问题</th><th scope="col">输出</th><th scope="col">主看指标</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><b>线性回归</b></td><td>某个值是多少</td><td>连续数值</td><td>RMSE、决定系数 R²</td></tr>
+      <tr><td><b>多项式回归</b></td><td>关系是弯曲的值是多少</td><td>连续数值</td><td>RMSE、R²</td></tr>
+      <tr><td><b>逻辑回归（二元）</b></td><td>是 A 还是 B</td><td>0 / 1</td><td>精确率、召回率、F1、AUC</td></tr>
+      <tr><td><b>逻辑回归（多项式）</b></td><td>多个无序类别是哪个</td><td>多个类别</td><td>同上（宏平均 / 加权平均）</td></tr>
+      <tr><td><b>逻辑回归（有序）</b></td><td>有序类别是哪个</td><td>有序类别</td><td>同上，注意顺序编码</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<p>判断标准可以简化成一句：<strong>要数字用线性回归，是与否用逻辑回归</strong>（预测身高 → 线性；判断一道菜是不是素食 → 逻辑）。</p>
+
+<h2 id="advice">七、给同样入门的三条建议</h2>
+
+<div class="kb-conclusion">
+  <ol>
+    <li><b>数据的收益远大于算法。</b>品种 + 城市 + 包装这些特征一加，决定系数从 0.07 到 0.94；而线性换多项式只从 0.07 到 0.08。先问「我有没有把该有的特征喂进去」。</li>
+    <li><b>编码方式会悄悄决定模型对错。</b>有序类别用 OrdinalEncoder，无序类别用 One-Hot，别用编号当数值。</li>
+    <li><b>指标要挑对的。</b>回归看 RMSE 与 R²，分类别只盯准确率——先看混淆矩阵，再看精确率 / 召回率 / F1。</li>
+  </ol>
+</div>
+
+<h2 id="conclusion">结语</h2>
+
+<p>四讲跑完最有感触的一点：所谓「机器学习」，大部分时间并不在 <code>fit()</code> 那一行，而是在<strong>把数据弄干净、把特征表达正确、把评估口径搞对</strong>这三件事上。课程最后也指明了再往前走一步的方向：逐步回归、岭回归（Ridge）、套索回归（Lasso）、弹性网（Elasticnet），以及斯坦福的《统计学习》课程。</p>
+
+<div class="kb-callout">
+  下一模块就要进入分类的世界了。到那时回头看，这一章留下的最有用的东西其实是一句大白话：<b>模型只是关系的容器，容器里装什么，取决于你对数据的理解。</b>
+</div>
+
+<div class="kb-source">
+  内容来源：Microsoft <b>ML for Beginners</b> · 2-Regression（Lesson 1 Tools / Lesson 2 Data / Lesson 3 Linear &amp; Polynomial Regression / Lesson 4 Logistic Regression）· 数据集：USDA Specialty Crops Terminal Markets Standard Reports 加工而成的 US-pumpkins.csv · 延伸参考：Scikit-learn 官方文档、斯坦福《统计学习》课程、The Spruce Eats 关于 bushel 单位的说明。
+</div>
+
+</div>
