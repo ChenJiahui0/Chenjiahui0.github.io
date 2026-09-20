@@ -77,7 +77,7 @@ google-ga_track_id: UA-163806439-1
 
 # Sidebar settings
 sidebar: true # whether or not using Sidebar.
-sidebar-about-description: "创造真正的价值 <br> React Team @ ByteDance"
+sidebar-about-description: "创造真正的价值 <br> Recent Company @ ByteDance"
 sidebar-avatar: /img/logo.svg # use absolute URL, seeing it's used in both `/` and `/about/`
 
 # Featured Tags
