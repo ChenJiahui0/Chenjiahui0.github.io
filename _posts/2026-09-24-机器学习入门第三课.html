@@ -1,0 +1,490 @@
+---
+title: 机器学习入门第三课：给 2448 道菜贴标签，四讲把「食材 → 菜系」做到 84%
+layout: post
+author: 陈家辉
+tags:
+  - 人工智能
+  - 机器学习
+  - 分类算法
+  - Scikit-learn
+  - 学习笔记
+---
+
+<style>
+/* ========== 文章美化样式（作用域限定在 .kb-article 内，避免影响全局） ========== */
+.kb-article{line-height:1.9;font-size:16px}
+.kb-article h2{font-size:1.45em;margin:2.2em 0 .8em;padding-bottom:.35em;border-bottom:2px solid #eef0f6;color:#1f2430;position:relative;font-weight:700}
+.kb-article h3{font-size:1.15em;margin:1.6em 0 .6em;color:#333a4b;font-weight:700}
+.kb-article p{margin:.6em 0 1em}
+.kb-article ul,.kb-article ol{padding-left:1.4em;margin:.6em 0 1.1em}
+.kb-article li{margin:.35em 0}
+/* 顶部元信息 */
+.kb-meta{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:#f5f7fb;border:1px solid #e7ecf5;border-radius:10px;padding:10px 16px;margin:0 0 26px;color:#5a6478;font-size:.92em}
+.kb-chip{background:#e8effd;color:#2b5fd9;border-radius:20px;padding:2px 12px;font-size:.85em;white-space:nowrap}
+/* Hero 核心结论卡 */
+.kb-hero{background:linear-gradient(135deg,#3b5bf0 0%,#6d3df0 60%,#9b3df0 100%);color:#fff;border-radius:16px;padding:30px 28px;margin:6px 0 26px;box-shadow:0 12px 30px rgba(80,70,229,.28);text-align:center}
+.kb-hero .kb-hero-label{font-size:.85em;letter-spacing:4px;opacity:.85;margin-bottom:12px;font-weight:600}
+.kb-hero .kb-hero-formula{font-size:clamp(1.15rem,2.4vw,1.7rem);font-weight:800;line-height:1.5;margin:0 0 14px}
+.kb-hero .kb-hero-formula .plus{color:#ffe08a;margin:0 8px}
+.kb-hero p{margin:0;font-size:.98em;opacity:.95;max-width:760px;margin:0 auto}
+/* 章节入口条（非标题） */
+.kb-lead{display:flex;align-items:center;gap:14px;background:#fbfcff;border:1px solid #e8edf8;border-radius:12px;padding:16px 18px;margin:1.4em 0}
+.kb-lead .kb-icon{flex:none;width:44px;height:44px;border-radius:50%;background:#e8effd;color:#2b5fd9;font-weight:800;font-size:1.15em;display:flex;align-items:center;justify-content:center}
+.kb-lead b{color:#2b5fd9}
+/* 定义卡 */
+.kb-def{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin:1em 0 1.4em}
+.kb-def-item{background:#fafbfe;border:1px solid #e9edf6;border-left:4px solid #4f6ef7;border-radius:10px;padding:16px 18px}
+.kb-def-item h3{margin:0 0 8px;font-size:1.05em}
+.kb-def-item .kb-word{font-weight:700;color:#4f6ef7;font-size:1.12em;display:block;margin-bottom:4px}
+.kb-def-item p{margin:0;font-size:.95em}
+/* 卡片网格 */
+.kb-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin:1em 0 1.4em}
+.kb-grid .kb-card{background:#fff;border:1px solid #e7ebf4;border-radius:12px;padding:16px 16px 14px;transition:transform .15s ease,box-shadow .15s ease}
+.kb-grid .kb-card:hover{transform:translateY(-3px);box-shadow:0 8px 20px rgba(31,45,120,.10)}
+.kb-grid .kb-card .kb-num{display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:30px;border-radius:9px;background:#eef2ff;color:#3d5bf5;font-weight:800;font-size:.92em;margin-bottom:8px;padding:0 8px}
+.kb-grid .kb-card b{display:block;font-size:1em;margin-bottom:4px}
+.kb-grid .kb-card p{margin:0;font-size:.93em;color:#4b5568}
+.kb-grid .kb-card.kb-bad .kb-num{background:#fef1f1;color:#d64550}
+.kb-grid .kb-card.kb-bad b{color:#d64550}
+/* 表格 */
+.kb-table-wrap{overflow-x:auto;margin:1em 0 1.4em;border-radius:12px;border:1px solid #e7ebf4}
+.kb-table-wrap table{width:100%;border-collapse:collapse;background:#fff;font-size:.95em;margin:0}
+.kb-table-wrap thead th{background:#f0f4ff;color:#1f2d5c;font-weight:700;text-align:left;padding:11px 16px;white-space:nowrap;border-bottom:2px solid #dbe4fb}
+.kb-table-wrap tbody td{padding:11px 16px;border-bottom:1px solid #eef1f7;vertical-align:top;color:#3a4152}
+.kb-table-wrap tbody tr:last-child td{border-bottom:none}
+.kb-table-wrap tbody tr:nth-child(even){background:#fafbfe}
+.kb-table-wrap tbody tr:hover{background:#f3f6ff}
+.kb-table-wrap code{background:#f0f2f7;color:#c7254e;border-radius:4px;padding:1px 6px;font-size:.92em}
+/* 流程条 */
+.kb-flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:8px;justify-content:center;background:#f8f9fd;border:1px dashed #cdd6ea;border-radius:14px;padding:20px 16px;margin:1.2em 0}
+.kb-flow .kb-step{flex:1 1 150px;max-width:200px;background:#fff;border:1px solid #dfe5f2;border-radius:10px;padding:12px 10px;text-align:center}
+.kb-flow .kb-step b{display:block;font-size:.92em;color:#22315f;margin-bottom:2px}
+.kb-flow .kb-step small{color:#7b8396;font-size:.8em;line-height:1.4;display:block}
+.kb-flow .kb-arrow{display:flex;align-items:center;color:#4f6ef7;font-weight:800;font-size:1.2em;padding:0 2px}
+.kb-flow .kb-goal{flex:1 1 150px;max-width:200px;background:linear-gradient(135deg,#22c55e,#16a34a);border:none;border-radius:10px;padding:12px 10px;text-align:center;color:#fff}
+.kb-flow .kb-goal b{display:block;font-size:.92em;margin-bottom:2px}
+.kb-flow .kb-goal small{font-size:.8em;opacity:.92;display:block;line-height:1.4}
+.kb-flow-note{text-align:center;color:#7b8396;font-size:.85em;margin:-.4em 0 1.4em}
+/* 时间线 */
+.kb-timeline{position:relative;margin:1.4em 0 1.6em;padding-left:26px}
+.kb-timeline::before{content:"";position:absolute;left:7px;top:6px;bottom:6px;width:2px;background:linear-gradient(180deg,#4f6ef7,#9b3df0)}
+.kb-tl-item{position:relative;margin:0 0 18px;padding:14px 18px;background:#fff;border:1px solid #e7ebf4;border-radius:12px}
+.kb-tl-item::before{content:"";position:absolute;left:-24px;top:20px;width:12px;height:12px;border-radius:50%;background:#4f6ef7;border:3px solid #fff;box-shadow:0 0 0 2px #4f6ef7}
+.kb-tl-item .kb-tl-year{display:inline-block;background:#eef2ff;color:#3d5bf5;border-radius:6px;font-size:.8em;font-weight:700;padding:2px 10px;margin-right:10px}
+.kb-tl-item b{display:inline;font-size:1.05em;margin:0}
+.kb-tl-item p{margin:0;font-size:.95em}
+/* 引用 callout */
+.kb-callout{background:#fff7ea;border:1px solid #ffe0b0;border-left:4px solid #f5a623;border-radius:10px;padding:12px 16px;margin:1.2em 0;font-size:.95em;color:#5a4a1f}
+.kb-callout b{color:#b26a00}
+.kb-callout.kb-warn{background:#fff1f1;border-color:#ffd0d0;border-left-color:#e5484d;color:#5c2b2b}
+.kb-callout.kb-warn b{color:#c02a2a}
+/* 代码块 */
+.kb-code-wrap{position:relative;margin:1em 0 1.4em}
+.kb-code-wrap .kb-code-lang{position:absolute;top:0;right:0;background:#e6ebfb;color:#3d5bf5;font-size:.75em;font-weight:700;padding:2px 10px;border-radius:0 10px 0 10px;letter-spacing:.5px}
+.kb-article pre{background:#1f2430;color:#e6edf3;border-radius:10px;padding:18px 20px 16px;overflow-x:auto;margin:0;font-size:.88em;line-height:1.7;font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace}
+.kb-article pre code{background:none;color:inherit;padding:0;border-radius:0;font-size:1em;white-space:pre}
+.kb-article code{background:#f0f2f7;color:#c7254e;border-radius:4px;padding:1px 6px;font-size:.92em}
+/* 结论列表 */
+.kb-conclusion{background:#f6f8ff;border:1px solid #dde6ff;border-radius:14px;padding:20px 20px 8px;margin:1.2em 0}
+.kb-conclusion ol{margin:0;padding-left:0;list-style:none;counter-reset:concl}
+.kb-conclusion li{counter-increment:concl;position:relative;padding:6px 0 10px 44px;border-bottom:1px dashed #e2e9fb}
+.kb-conclusion li:last-child{border-bottom:none}
+.kb-conclusion li::before{content:counter(concl);position:absolute;left:0;top:8px;width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#4f6ef7,#9b3df0);color:#fff;font-weight:800;font-size:.95em;display:flex;align-items:center;justify-content:center}
+.kb-conclusion b{color:#27409e}
+/* 来源 */
+.kb-source{margin-top:2em;padding:14px 18px;background:#f8f9fb;border-left:3px solid #c8d2e8;border-radius:0 8px 8px 0;font-size:.9em;color:#6b7280}
+.kb-source a{color:#4f6ef7;text-decoration:none}
+@media (max-width:767px){.kb-flow .kb-arrow{transform:rotate(90deg);padding:2px 0}.kb-hero{padding:22px 16px}}
+</style>
+
+<div class="kb-article">
+
+<div class="kb-meta">
+  <span>读书笔记 · 微软 ML for Beginners 第四模块（Classification）四讲归纳</span>
+  <span class="kb-chip">多分类</span>
+  <span class="kb-chip">SMOTE</span>
+  <span class="kb-chip">SVC / 随机森林</span>
+  <span class="kb-chip">ONNX</span>
+  <span class="kb-chip">亚洲美食 🍜</span>
+</div>
+
+<div class="kb-hero">
+  <div class="kb-hero-label">一句话掌握全篇</div>
+  <div class="kb-hero-formula">干净均衡的数据 <span class="plus">+</span> 选对分类器 <span class="plus">+</span> 看对的指标<br><span class="plus">→</span> 84% 准确率的菜系推荐</div>
+  <p>回归回答「是多少」，分类回答「是哪一类」。这一模块四讲跑完，我对「模型上线」这件事的完整链路第一次有了实感：清洗 → 平衡 → 训练 → 评估 → 转成 ONNX 塞进浏览器。</p>
+</div>
+
+<p>上一个模块我们用同一个<a href="https://www.marketnews.usda.gov/mnp/fv-report-config-step1?type=termPrice">南瓜数据集</a>把回归讲完了。这一模块换了个更香的数据集：<strong>2448 道亚洲与印度菜，384 个 0/1 配料列</strong>，任务是「给我一堆食材，猜它是哪国菜」。四讲下来我最深的感受是——<strong>决定成败的不是算法，而是数据平不平衡、以及你有没有看对指标</strong>。</p>
+
+<h2 id="s1">一、分类到底在做什么：从「是多少」到「是哪个」</h2>
+
+<div class="kb-lead">
+  <div class="kb-icon">01</div>
+  <div>分类是有监督学习，和回归是同一套路数：<b>给带标签的数据，学一个从输入到输出的映射</b>，只不过输出从连续值变成了离散的类别。</div>
+</div>
+
+<div class="kb-def">
+  <div class="kb-def-item">
+    <span class="kb-word">二分类 Binary</span>
+    <p>只有两个候选类。例：这封邮件是不是垃圾邮件？这个南瓜是不是白色？</p>
+  </div>
+  <div class="kb-def-item">
+    <span class="kb-word">多分类 Multiclass</span>
+    <p>三个及以上候选类，且每个样本只属于一个。本文的「泰 / 日 / 中 / 印 / 韩」五选一就是典型。</p>
+  </div>
+  <div class="kb-def-item">
+    <span class="kb-word">多标签 Multilabel</span>
+    <p>一个样本可以同时属于多个类（一道菜既是「辣」又是「素食」）。这一模块没涉及，别和多分类搞混。</p>
+  </div>
+</div>
+
+<p>数据长这样：每一行是一道菜，每一列是一种配料，<code>1</code> 表示用了、<code>0</code> 表示没用。</p>
+
+<div class="kb-code-wrap">
+  <span class="kb-code-lang">python</span>
+  <pre><code>import pandas as pd
+df = pd.read_csv('../data/cuisines.csv')
+df.info()
+# RangeIndex: 2448 entries, 0 to 2447
+# Columns: 385 entries, Unnamed: 0 to zucchini
+# dtypes: int64(384), object(1)   # 384 个配料列 + 1 个 cuisine 文本列
+
+df.cuisine.value_counts().plot.barh()</code></pre>
+</div>
+
+<p>一画图就发现问题了——五个菜系的数量严重不均：</p>
+
+<div class="kb-table-wrap">
+  <table>
+    <thead>
+      <tr><th scope="col">菜系</th><th scope="col">样本数</th><th scope="col">占比</th><th scope="col">后果</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>korean</td><td>799</td><td>32.6%</td><td>模型会偏爱它</td></tr>
+      <tr><td>indian</td><td>598</td><td>24.4%</td><td>—</td></tr>
+      <tr><td>chinese</td><td>442</td><td>18.1%</td><td>—</td></tr>
+      <tr><td>japanese</td><td>320</td><td>13.1%</td><td>样本偏少</td></tr>
+      <tr><td>thai</td><td>289</td><td>11.8%</td><td>最容易被误判</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="kb-callout">
+  <b>为什么不平衡很致命</b>：如果训练集里韩国菜占三分之一，模型只要「无脑猜韩国」就能拿到 32% 的准确率，而且它对泰国菜几乎学不到东西。这就是第一讲要先做 <b>SMOTE</b> 的原因。
+</div>
+
+<h2 id="s2">二、第一讲：清洗与平衡，比调参重要得多</h2>
+
+<h3>2.1 先看看每个菜系爱用什么</h3>
+
+<p>课程给了一个很巧妙的小函数：把 DataFrame 转置、按列求和、再去零排序，就得到了「这个国家最常出现的配料」。</p>
+
+<div class="kb-code-wrap">
+  <span class="kb-code-lang">python</span>
+  <pre><code>def create_ingredient_df(df):
+    ingredient_df = df.T.drop(['cuisine','Unnamed: 0']).sum(axis=1).to_frame('value')
+    ingredient_df = ingredient_df[(ingredient_df.T != 0).any()]
+    ingredient_df = ingredient_df.sort_values(by='value', ascending=False, inplace=False)
+    return ingredient_df
+
+thai_ingredient_df = create_ingredient_df(df[df.cuisine == "thai"])
+thai_ingredient_df.head(10).plot.barh()</code></pre>
+</div>
+
+<p>五个国家画完五张图，结论很直观：<strong>rice、garlic、ginger 在五个菜系里都是顶流</strong>。这种「人人都有的特征」对区分任务毫无帮助，只提供噪声，所以直接删掉：</p>
+
+<div class="kb-code-wrap">
+  <span class="kb-code-lang">python</span>
+  <pre><code>feature_df = df.drop(['cuisine', 'Unnamed: 0', 'rice', 'garlic', 'ginger'], axis=1)
+labels_df  = df.cuisine</code></pre>
+</div>
+
+<div class="kb-callout">
+  <b>这一步的思路值得记住</b>：不是「特征越多越好」，而是<b>要删掉那些在所有类别里分布都一样的特征</b>。它们的方差贡献为零，白白增加维度。
+</div>
+
+<h3>2.2 SMOTE：用插值造出少数类样本</h3>
+
+<p><strong>SMOTE</strong>（Synthetic Minority Over-sampling Technique）不是简单复制少数类样本，而是在少数类样本之间<strong>做插值</strong>生成新样本。一句 <code>fit_resample</code> 就能把五类全拉到 799：</p>
+
+<div class="kb-code-wrap">
+  <span class="kb-code-lang">python</span>
+  <pre><code>from imblearn.over_sampling import SMOTE
+
+oversample = SMOTE()
+transformed_feature_df, transformed_label_df = oversample.fit_resample(feature_df, labels_df)
+
+print(transformed_label_df.value_counts())
+# korean 799 | chinese 799 | indian 799 | japanese 799 | thai 799
+
+transformed_df = pd.concat([transformed_label_df, transformed_feature_df], axis=1, join='outer')
+transformed_df.to_csv("../data/cleaned_cuisines.csv")   # 后面三讲都用它</code></pre>
+</div>
+
+<div class="kb-flow">
+  <div class="kb-step"><b>原始数据</b><small>2448 行，五类不均</small></div>
+  <div class="kb-arrow">→</div>
+  <div class="kb-step"><b>删共通配料</b><small>rice / garlic / ginger</small></div>
+  <div class="kb-arrow">→</div>
+  <div class="kb-step"><b>SMOTE 插值</b><small>少数类合成新样本</small></div>
+  <div class="kb-arrow">→</div>
+  <div class="kb-goal"><b>均衡数据</b><small>5 × 799 = 3995 行</small></div>
+</div>
+<p class="kb-flow-note">这一步做完，后面三讲的输入数据就固定了</p>
+
+<div class="kb-callout kb-warn">
+  <b>我自己加的一个警告（教材没提）</b>：课程是<b>先 SMOTE 再 train_test_split</b>，这会让合成样本混进测试集，指标偏乐观。严谨做法是先切分、<b>只对训练集做 SMOTE</b>，或者干脆用 <code>imblearn.pipeline.Pipeline</code> 把采样器包进去，配合交叉验证才不会泄漏。
+</div>
+
+<h2 id="s3">三、第二讲：逻辑回归做多分类，三个必须看懂的输出</h2>
+
+<div class="kb-lead">
+  <div class="kb-icon">02</div>
+  <div>逻辑回归天生是二分类器，要处理五分类得靠 <b>one-vs-rest</b> 或 <b>multinomial</b> 两种策略；这一讲还第一次出现了「给单个样本做解释」的操作。</div>
+</div>
+
+<h3>3.1 教材写法与新版本 sklearn 的冲突</h3>
+
+<div class="kb-code-wrap">
+  <span class="kb-code-lang">python</span>
+  <pre><code>X_train, X_test, y_train, y_test = train_test_split(
+    cuisines_feature_df, cuisines_label_df, test_size=0.3)
+
+lr = LogisticRegression(multi_class='ovr', solver='liblinear')
+model = lr.fit(X_train, np.ravel(y_train))
+print("Accuracy is {}".format(model.score(X_test, y_test)))   # 0.80+</code></pre>
+</div>
+
+<p>这里有两个参数需要理解：</p>
+
+<div class="kb-table-wrap">
+  <table>
+    <thead>
+      <tr><th scope="col">参数</th><th scope="col">取值</th><th scope="col">含义</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>multi_class</code></td><td><code>'ovr'</code></td><td>one-vs-rest：为每一类训练一个「是不是这一类」的二分类器，共 5 个</td></tr>
+      <tr><td><code>multi_class</code></td><td><code>'multinomial'</code></td><td>直接优化交叉熵（softmax），只被 lbfgs / sag / saga / newton-cg 支持</td></tr>
+      <tr><td><code>solver</code></td><td><code>'liblinear'</code></td><td>优化算法；它<b>不支持三分类以上</b>，所以必须配 <code>ovr</code></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="kb-callout kb-warn">
+  <b>我实际踩到的坑</b>：我的环境是 <b>sklearn 1.9.0</b>，<code>multi_class</code> 参数已经被移除，上面那行会直接报 <code>TypeError: LogisticRegression.__init__() got an unexpected keyword argument 'multi_class'</code>。新版把多分类统一成 multinomial 实现，OvR 改由 <code>OneVsRestClassifier</code> 提供：
+  <br><br>
+  <code>from sklearn.multiclass import OneVsRestClassifier</code><br>
+  <code>model = OneVsRestClassifier(LogisticRegression(solver='liblinear')).fit(X_train, np.ravel(y_train))</code>
+  <br><br>
+  或者直接 <code>LogisticRegression(max_iter=1000)</code> 用默认的 lbfgs + multinomial。我在三分类模拟数据上对比过：OvR 0.813 vs 默认 0.827，差别不大。
+</div>
+
+<h3>3.2 输出一：单个样本的「人话解释」</h3>
+
+<div class="kb-code-wrap">
+  <span class="kb-code-lang">python</span>
+  <pre><code>print(f'ingredients: {X_test.iloc[50][X_test.iloc[50]!=0].keys()}')
+print(f'cuisine: {y_test.iloc[50]}')
+# ingredients: Index(['cilantro', 'onion', 'pea', 'potato', 'tomato', 'vegetable_oil'], ...)
+# cuisine: indian</code></pre>
+</div>
+
+<p>这行是我这一讲最喜欢的一句，拆开看：<code>iloc[50]</code> 取第 51 行 → <code>!= 0</code> 得到布尔掩码 → 布尔索引筛出用过的配料 → <code>.keys()</code> 拿到配料名（Series 上等价于 <code>.index</code>）。<strong>用 <code>!= 0</code> 而不是 <code>== 1</code></strong> 是通用写法，遇到计数或 TF-IDF 权重也一样成立。</p>
+
+<h3>3.3 输出二：每个类别的概率</h3>
+
+<div class="kb-code-wrap">
+  <span class="kb-code-lang">python</span>
+  <pre><code>test  = X_test.iloc[50].values.reshape(-1, 1).T      # 注意保持二维
+proba = model.predict_proba(test)
+pd.DataFrame(data=proba, columns=model.classes_).T.sort_values(by=0, ascending=False)
+# indian    0.715851
+# chinese   0.229475
+# japanese  0.029763
+# korean    0.017277
+# thai      0.007634</code></pre>
+</div>
+
+<p>模型给出 71.6% 押印度菜，第二名中国菜 22.9%——这种「概率分布」比一个硬标签有用得多，推荐系统里排序就靠它。</p>
+
+<h3>3.4 输出三：分类报告</h3>
+
+<div class="kb-table-wrap">
+  <table>
+    <thead>
+      <tr><th scope="col">菜系</th><th scope="col">precision</th><th scope="col">recall</th><th scope="col">f1-score</th><th scope="col">support</th><th scope="col">解读</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>chinese</td><td>0.73</td><td>0.71</td><td>0.72</td><td>229</td><td>最弱，中日韩泰食材重叠多</td></tr>
+      <tr><td>indian</td><td>0.91</td><td>0.93</td><td>0.92</td><td>254</td><td>香料组合辨识度极高</td></tr>
+      <tr><td>japanese</td><td>0.70</td><td>0.75</td><td>0.72</td><td>220</td><td>偏弱</td></tr>
+      <tr><td>korean</td><td>0.86</td><td>0.76</td><td>0.81</td><td>242</td><td>—</td></tr>
+      <tr><td>thai</td><td>0.79</td><td>0.85</td><td>0.82</td><td>254</td><td>—</td></tr>
+      <tr><td><b>accuracy</b></td><td colspan="3"><b>0.80</b></td><td>1199</td><td>整体八成</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<p>印度菜 0.92、中国菜 0.72——<strong>光看 0.80 的准确率会把这个差异完全掩盖掉</strong>。这就是为什么多分类必须看 per-class 的 F1，而不是只报一个 accuracy。</p>
+
+<h2 id="s4">四、第三讲：照着 cheat sheet 试五把刀</h2>
+
+<div class="kb-lead">
+  <div class="kb-icon">03</div>
+  <div>选算法不是抓阄。Scikit-learn 有一张「机器学习地图」：<b>&gt;50 样本、要预测类别、有标签、&lt;10 万样本 → 先试 Linear SVC → 再 KNN → 再 SVC 与集成方法</b>。</div>
+</div>
+
+<p>课程的做法是把分类器塞进一个字典，循环训练、统一打印报告，非常值得照抄：</p>
+
+<div class="kb-code-wrap">
+  <span class="kb-code-lang">python</span>
+  <pre><code>from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import SVC
+from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
+
+C = 10
+classifiers = {
+    'Linear SVC': SVC(kernel='linear', C=C, probability=True, random_state=0),
+    'KNN classifier': KNeighborsClassifier(C),
+    'SVC': SVC(),
+    'RFST': RandomForestClassifier(n_estimators=100),
+    'ADA': AdaBoostClassifier(n_estimators=100)
+}
+
+for name, classifier in classifiers.items():
+    classifier.fit(X_train, np.ravel(y_train))
+    y_pred = classifier.predict(X_test)
+    print("Accuracy for %s: %0.1f%%" % (name, accuracy_score(y_test, y_pred) * 100))
+    print(classification_report(y_test, y_pred))</code></pre>
+</div>
+
+<h3>4.1 五把刀的实测对比</h3>
+
+<div class="kb-table-wrap">
+  <table>
+    <thead>
+      <tr><th scope="col">分类器</th><th scope="col">准确率</th><th scope="col">一句话原理</th><th scope="col">表现</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Linear SVC</td><td>78.6%</td><td>找一条（超）平面把类别分开，间隔最大</td><td>基线合格</td></tr>
+      <tr><td>KNN（k=10）</td><td>73.8%</td><td>看最近的 k 个邻居投票</td><td>高维稀疏 0/1 数据上距离失效</td></tr>
+      <tr><td>SVC（RBF 核）</td><td>83.2%</td><td>把样本映射到高维再分割，能画非线性边界</td><td>明显变好</td></tr>
+      <tr><td><b>Random Forest</b></td><td><b>84.5%</b></td><td>100 棵随机决策树投票，靠随机性抑制过拟合</td><td><b>本场最佳</b></td></tr>
+      <tr><td>AdaBoost</td><td>72.4%</td><td>串行训练弱分类器，每轮专注分错的样本</td><td>最差，对本数据不适合</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="kb-grid">
+  <div class="kb-card"><span class="kb-num">KNN</span><b>为什么垫底</b><p>380 维的 0/1 稀疏向量，「距离」这个概念本身变得很不可靠，两条菜谱几乎总是「同样远近」。</p></div>
+  <div class="kb-card"><span class="kb-num">RF</span><b>为什么最好</b><p>树模型天然擅长「if 有鱼露 and 有柠檬草 → 泰餐」这类特征组合判断，而配料表正是这种结构。</p></div>
+  <div class="kb-card kb-bad"><span class="kb-num">ADA</span><b>AdaBoost 为何拉胯</b><p>默认基学习器是深度 1 的决策树（决策树桩），对这种需要多特征组合的任务表达能力不够。</p></div>
+</div>
+
+<div class="kb-callout">
+  <b>读代码时的一个发现</b>：教材里写 <code>KNeighborsClassifier(C)</code>，而 <code>C = 10</code> 本来是给 SVC 用的正则化参数。KNN 的第一个位置参数其实是 <code>n_neighbors</code>，所以这里等价于是「取 10 个邻居」——<b>数值上的巧合，不是参数意义上的复用</b>。抄代码时别把两个同名变量当成一回事。
+</div>
+
+<h2 id="s5">五、第四讲：把模型塞进浏览器</h2>
+
+<div class="kb-lead">
+  <div class="kb-icon">04</div>
+  <div>这一讲把「模型」从 notebook 里拿了出来：训练 SVC → 转成 <b>ONNX</b> → 用 <b>onnxruntime-web</b> 在纯前端推理，全程离线可跑。</div>
+</div>
+
+<div class="kb-flow">
+  <div class="kb-step"><b>训练 SVC</b><small>kernel='linear', C=10</small></div>
+  <div class="kb-arrow">→</div>
+  <div class="kb-step"><b>skl2onnx 转换</b><small>声明输入 [None, 380]</small></div>
+  <div class="kb-arrow">→</div>
+  <div class="kb-step"><b>model.onnx</b><small>用 Netron 可视化检查</small></div>
+  <div class="kb-arrow">→</div>
+  <div class="kb-goal"><b>index.html 推理</b><small>勾选配料 → 猜菜系</small></div>
+</div>
+<p class="kb-flow-note">和上一个模块的 Flask + pickle 方案相比，这条路不需要后端 Python 进程</p>
+
+<h3>5.1 导出 ONNX</h3>
+
+<div class="kb-code-wrap">
+  <span class="kb-code-lang">python</span>
+  <pre><code>from skl2onnx import convert_sklearn
+from skl2onnx.common.data_types import FloatTensorType
+
+initial_type = [('float_input', FloatTensorType([None, 380]))]   # 380 = 配料特征数
+options = {id(model): {'nocl': True, 'zipmap': False}}           # 去掉冗余输出，缩小体积
+
+onx = convert_sklearn(model, initial_types=initial_type, options=options)
+with open("./model.onnx", "wb") as f:
+    f.write(onx.SerializeToString())</code></pre>
+</div>
+
+<p>两个 option 都是实用技巧：<code>zipmap=False</code> 去掉分类模型默认附加的「字典列表」输出；<code>nocl=True</code> 不把类别信息写进模型，能显著减小文件体积。</p>
+
+<h3>5.2 前端推理</h3>
+
+<div class="kb-code-wrap">
+  <span class="kb-code-lang">html</span>
+  <pre><code>&lt;script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.9.0/dist/ort.min.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+    const ingredients = Array(380).fill(0);          // 380 维输入向量
+    const checks = [...document.querySelectorAll('.checkbox')];
+
+    checks.forEach(check =&gt; {
+        check.addEventListener('change', function() {
+            ingredients[check.value] = check.checked ? 1 : 0;   // value = 配料在表中的列索引
+        });
+    });
+
+    async function startInference() {
+        const session = await ort.InferenceSession.create('./model.onnx');
+        const input  = new ort.Tensor(new Float32Array(ingredients), [1, 380]);
+        const results = await session.run({ float_input: input });
+        alert('You can enjoy ' + results.label.data[0] + ' cuisine today!');
+    }
+&lt;/script&gt;</code></pre>
+</div>
+
+<p>三个关键点：① 每个 checkbox 的 <code>value</code> 是配料在数据集里的<strong>列索引</strong>（课程提供了 <code>ingredient_indexes.csv</code> 对照表）；② 输入必须构造成 <code>[1, 380]</code> 的 <code>Float32Array</code>；③ <code>float_input</code> 这个 feed 名字必须和导出时声明的一致，可以用 <a href="https://github.com/lutzroeder/Netron">Netron</a> 打开模型确认。</p>
+
+<h2 id="pitfalls">六、我实际踩到的坑</h2>
+
+<div class="kb-timeline">
+  <div class="kb-tl-item">
+    <span class="kb-tl-year">坑 1</span>
+    <b><code>multi_class</code> 参数已消失</b>
+    <p>sklearn 1.9 已移除该参数，教材代码直接 <code>TypeError</code>。多分类要用 <code>OneVsRestClassifier</code> 包一层，或改用默认 solver；另外 <code>liblinear</code> 本身不支持 ≥3 类，这就是当年必须配 <code>ovr</code> 的原因。</p>
+  </div>
+  <div class="kb-tl-item">
+    <span class="kb-tl-year">坑 2</span>
+    <b>SMOTE 在切分之前做 = 数据泄漏</b>
+    <p>教材先做 SMOTE 再 <code>train_test_split</code>，合成样本会混进测试集，指标偏乐观。严谨顺序：先切分 → 只对训练集采样；或用 <code>imblearn.pipeline.Pipeline</code>。</p>
+  </div>
+  <div class="kb-tl-item">
+    <span class="kb-tl-year">坑 3</span>
+    <b><code>y</code> 是 DataFrame 不是 Series</b>
+    <p>课程里 <code>cuisines_label_df</code> 来自 <code>df[['cuisine']]</code>（双括号），所以训练要写 <code>np.ravel(y_train)</code>；查看标签时 <code>y_test.iloc[50]</code> 返回的是一整行 Series，得写 <code>y_test.iloc[50, 0]</code> 或 <code>.item()</code> 才拿到字符串。</p>
+  </div>
+  <div class="kb-tl-item">
+    <span class="kb-tl-year">坑 4</span>
+    <b>教材把测试集准确率打印成 "Accuracy (train)"</b>
+    <p>第三讲的循环里标签写的是 train，实际算的是 <code>accuracy_score(y_test, y_pred)</code>。读指标前先看清它到底用的哪一份数据，别被变量名带偏。</p>
+  </div>
+</div>
+
+<h2 id="conclusion">结语</h2>
+
+<div class="kb-conclusion">
+  <ol>
+    <li><b>先平衡，再建模。</b> category 数量差 2~3 倍就足以毁掉少数类的学习效果；SMOTE 用一行 <code>fit_resample</code> 解决，但记得只对训练集做。</li>
+    <li><b>别只盯 accuracy。</b> 本模块里整体 80% 背后，印度菜 0.92、中国菜 0.72——多分类一定要看 per-class 的 precision / recall / F1 和 macro 平均。</li>
+    <li><b>选算法要「按图索骥 + 横向对比」。</b> 照着 sklearn 的 cheat sheet 走，再用字典循环一次性跑完五个分类器对比，比凭感觉挑高效得多。</li>
+    <li><b>树模型赢在特征组合。</b> 配料这种「有没有」的稀疏 0/1 特征，随机森林比 KNN、线性模型更合适；KNN 在高维稀疏数据上基本失效。</li>
+    <li><b>模型要能被用起来。</b> ONNX + onnxruntime-web 让我第一次体会到「训练在 Python、推理在浏览器」这条链路，也让模型真正脱离了 notebook。</li>
+  </ol>
+</div>
+
+<div class="kb-source">
+  内容来源：微软 <a href="https://github.com/microsoft/ML-For-Beginners">ML for Beginners</a> 第四模块 <a href="https://github.com/microsoft/ML-For-Beginners/tree/main/4-Classification">4-Classification</a>（Introduction / Classifiers-1 / Classifiers-2 / Applied）；数据集来自 <a href="https://www.kaggle.com/hoandan/asian-and-indian-cuisines">Kaggle: Asian and Indian Cuisines</a>。文中所列为我在 sklearn 1.9.0 环境下复现的记录，部分指标与教材略有出入。
+</div>
+
+</div>
