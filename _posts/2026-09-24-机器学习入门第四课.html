@@ -1,0 +1,491 @@
+---
+title: 机器学习入门第四课：没有标签也能学，K-Means 把 286 首尼日利亚歌曲分成三簇
+layout: post
+author: 陈家辉
+tags:
+  - 人工智能
+  - 机器学习
+  - 聚类算法
+  - K-Means
+  - 学习笔记
+---
+
+<style>
+/* ========== 文章美化样式（作用域限定在 .kb-article 内，避免影响全局） ========== */
+.kb-article{line-height:1.9;font-size:16px}
+.kb-article h2{font-size:1.45em;margin:2.2em 0 .8em;padding-bottom:.35em;border-bottom:2px solid #eef0f6;color:#1f2430;position:relative;font-weight:700}
+.kb-article h3{font-size:1.15em;margin:1.6em 0 .6em;color:#333a4b;font-weight:700}
+.kb-article p{margin:.6em 0 1em}
+.kb-article ul,.kb-article ol{padding-left:1.4em;margin:.6em 0 1.1em}
+.kb-article li{margin:.35em 0}
+/* 顶部元信息 */
+.kb-meta{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:#f5f7fb;border:1px solid #e7ecf5;border-radius:10px;padding:10px 16px;margin:0 0 26px;color:#5a6478;font-size:.92em}
+.kb-chip{background:#e8effd;color:#2b5fd9;border-radius:20px;padding:2px 12px;font-size:.85em;white-space:nowrap}
+/* Hero 核心结论卡 */
+.kb-hero{background:linear-gradient(135deg,#0f2e6b 0%,#5b3df0 60%,#9b3df0 100%);color:#fff;border-radius:16px;padding:30px 28px;margin:6px 0 26px;box-shadow:0 12px 30px rgba(80,70,229,.28);text-align:center}
+.kb-hero .kb-hero-label{font-size:.85em;letter-spacing:4px;opacity:.85;margin-bottom:12px;font-weight:600}
+.kb-hero .kb-hero-formula{font-size:clamp(1.15rem,2.4vw,1.7rem);font-weight:800;line-height:1.5;margin:0 0 14px}
+.kb-hero .kb-hero-formula .plus{color:#ffe08a;margin:0 8px}
+.kb-hero p{margin:0;font-size:.98em;opacity:.95;max-width:760px;margin:0 auto}
+/* 章节入口条（非标题） */
+.kb-lead{display:flex;align-items:center;gap:14px;background:#fbfcff;border:1px solid #e8edf8;border-radius:12px;padding:16px 18px;margin:1.4em 0}
+.kb-lead .kb-icon{flex:none;width:44px;height:44px;border-radius:50%;background:#e8effd;color:#2b5fd9;font-weight:800;font-size:1.15em;display:flex;align-items:center;justify-content:center}
+.kb-lead b{color:#2b5fd9}
+/* 定义卡 */
+.kb-def{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin:1em 0 1.4em}
+.kb-def-item{background:#fafbfe;border:1px solid #e9edf6;border-left:4px solid #4f6ef7;border-radius:10px;padding:16px 18px}
+.kb-def-item h3{margin:0 0 8px;font-size:1.05em}
+.kb-def-item .kb-word{font-weight:700;color:#4f6ef7;font-size:1.12em;display:block;margin-bottom:4px}
+.kb-def-item p{margin:0;font-size:.95em}
+/* 卡片网格 */
+.kb-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin:1em 0 1.4em}
+.kb-grid .kb-card{background:#fff;border:1px solid #e7ebf4;border-radius:12px;padding:16px 16px 14px;transition:transform .15s ease,box-shadow .15s ease}
+.kb-grid .kb-card:hover{transform:translateY(-3px);box-shadow:0 8px 20px rgba(31,45,120,.10)}
+.kb-grid .kb-card .kb-num{display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:30px;border-radius:9px;background:#eef2ff;color:#3d5bf5;font-weight:800;font-size:.92em;margin-bottom:8px;padding:0 8px}
+.kb-grid .kb-card b{display:block;font-size:1em;margin-bottom:4px}
+.kb-grid .kb-card p{margin:0;font-size:.93em;color:#4b5568}
+.kb-grid .kb-card.kb-bad .kb-num{background:#fef1f1;color:#d64550}
+.kb-grid .kb-card.kb-bad b{color:#d64550}
+/* 表格 */
+.kb-table-wrap{overflow-x:auto;margin:1em 0 1.4em;border-radius:12px;border:1px solid #e7ebf4}
+.kb-table-wrap table{width:100%;border-collapse:collapse;background:#fff;font-size:.95em;margin:0}
+.kb-table-wrap thead th{background:#f0f4ff;color:#1f2d5c;font-weight:700;text-align:left;padding:11px 16px;white-space:nowrap;border-bottom:2px solid #dbe4fb}
+.kb-table-wrap tbody td{padding:11px 16px;border-bottom:1px solid #eef1f7;vertical-align:top;color:#3a4152}
+.kb-table-wrap tbody tr:last-child td{border-bottom:none}
+.kb-table-wrap tbody tr:nth-child(even){background:#fafbfe}
+.kb-table-wrap tbody tr:hover{background:#f3f6ff}
+.kb-table-wrap code{background:#f0f2f7;color:#c7254e;border-radius:4px;padding:1px 6px;font-size:.92em}
+/* 流程条 */
+.kb-flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:8px;justify-content:center;background:#f8f9fd;border:1px dashed #cdd6ea;border-radius:14px;padding:20px 16px;margin:1.2em 0}
+.kb-flow .kb-step{flex:1 1 150px;max-width:200px;background:#fff;border:1px solid #dfe5f2;border-radius:10px;padding:12px 10px;text-align:center}
+.kb-flow .kb-step b{display:block;font-size:.92em;color:#22315f;margin-bottom:2px}
+.kb-flow .kb-step small{color:#7b8396;font-size:.8em;line-height:1.4;display:block}
+.kb-flow .kb-arrow{display:flex;align-items:center;color:#4f6ef7;font-weight:800;font-size:1.2em;padding:0 2px}
+.kb-flow .kb-goal{flex:1 1 150px;max-width:200px;background:linear-gradient(135deg,#22c55e,#16a34a);border:none;border-radius:10px;padding:12px 10px;text-align:center;color:#fff}
+.kb-flow .kb-goal b{display:block;font-size:.92em;margin-bottom:2px}
+.kb-flow .kb-goal small{font-size:.8em;opacity:.92;display:block;line-height:1.4}
+.kb-flow-note{text-align:center;color:#7b8396;font-size:.85em;margin:-.4em 0 1.4em}
+/* 时间线 */
+.kb-timeline{position:relative;margin:1.4em 0 1.6em;padding-left:26px}
+.kb-timeline::before{content:"";position:absolute;left:7px;top:6px;bottom:6px;width:2px;background:linear-gradient(180deg,#4f6ef7,#9b3df0)}
+.kb-tl-item{position:relative;margin:0 0 18px;padding:14px 18px;background:#fff;border:1px solid #e7ebf4;border-radius:12px}
+.kb-tl-item::before{content:"";position:absolute;left:-24px;top:20px;width:12px;height:12px;border-radius:50%;background:#4f6ef7;border:3px solid #fff;box-shadow:0 0 0 2px #4f6ef7}
+.kb-tl-item .kb-tl-year{display:inline-block;background:#eef2ff;color:#3d5bf5;border-radius:6px;font-size:.8em;font-weight:700;padding:2px 10px;margin-right:10px}
+.kb-tl-item b{display:inline;font-size:1.05em;margin:0}
+.kb-tl-item p{margin:0;font-size:.95em}
+/* 引用 callout */
+.kb-callout{background:#fff7ea;border:1px solid #ffe0b0;border-left:4px solid #f5a623;border-radius:10px;padding:12px 16px;margin:1.2em 0;font-size:.95em;color:#5a4a1f}
+.kb-callout b{color:#b26a00}
+.kb-callout.kb-warn{background:#fff1f1;border-color:#ffd0d0;border-left-color:#e5484d;color:#5c2b2b}
+.kb-callout.kb-warn b{color:#c02a2a}
+/* 代码块 */
+.kb-code-wrap{position:relative;margin:1em 0 1.4em}
+.kb-code-wrap .kb-code-lang{position:absolute;top:0;right:0;background:#e6ebfb;color:#3d5bf5;font-size:.75em;font-weight:700;padding:2px 10px;border-radius:0 10px 0 10px;letter-spacing:.5px}
+.kb-article pre{background:#1f2430;color:#e6edf3;border-radius:10px;padding:18px 20px 16px;overflow-x:auto;margin:0;font-size:.88em;line-height:1.7;font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace}
+.kb-article pre code{background:none;color:inherit;padding:0;border-radius:0;font-size:1em;white-space:pre}
+.kb-article code{background:#f0f2f7;color:#c7254e;border-radius:4px;padding:1px 6px;font-size:.92em}
+/* 结论列表 */
+.kb-conclusion{background:#f6f8ff;border:1px solid #dde6ff;border-radius:14px;padding:20px 20px 8px;margin:1.2em 0}
+.kb-conclusion ol{margin:0;padding-left:0;list-style:none;counter-reset:concl}
+.kb-conclusion li{counter-increment:concl;position:relative;padding:6px 0 10px 44px;border-bottom:1px dashed #e2e9fb}
+.kb-conclusion li:last-child{border-bottom:none}
+.kb-conclusion li::before{content:counter(concl);position:absolute;left:0;top:8px;width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#4f6ef7,#9b3df0);color:#fff;font-weight:800;font-size:.95em;display:flex;align-items:center;justify-content:center}
+.kb-conclusion b{color:#27409e}
+/* 来源 */
+.kb-source{margin-top:2em;padding:14px 18px;background:#f8f9fb;border-left:3px solid #c8d2e8;border-radius:0 8px 8px 0;font-size:.9em;color:#6b7280}
+.kb-source a{color:#4f6ef7;text-decoration:none}
+@media (max-width:767px){.kb-flow .kb-arrow{transform:rotate(90deg);padding:2px 0}.kb-hero{padding:22px 16px}}
+</style>
+
+<div class="kb-article">
+
+<div class="kb-meta">
+  <span>读书笔记 · 微软 ML for Beginners 第五模块（Clustering）两讲归纳 + 本地实测</span>
+  <span class="kb-chip">无监督学习</span>
+  <span class="kb-chip">K-Means</span>
+  <span class="kb-chip">轮廓系数</span>
+  <span class="kb-chip">肘部法则</span>
+  <span class="kb-chip">尼日利亚音乐 🎧</span>
+</div>
+
+<div class="kb-hero">
+  <div class="kb-hero-label">一句话掌握全篇</div>
+  <div class="kb-hero-formula">没有标签 <span class="plus">→</span> 聚类自动分组<br>但 k、量纲、评估指标都得你自己负责</div>
+  <p>分类是「告诉你答案，让你学会判断」，聚类是「什么都没告诉你，让你自己把相似的东西堆成堆」。这一模块两讲跑完，我最大的收获反而是：<strong>聚类的分数好看，不代表聚得有意义</strong>。</p>
+</div>
+
+<p>前面三个模块都在做有监督学习——数据带着标签，模型照着答案学。这一模块换了个玩法：<strong>数据没有标签（或者你故意不用标签）</strong>，让算法自己去找结构。教材用了一份很有意思的数据：<a href="https://www.kaggle.com/sootersaalu/nigerian-songs-spotify">530 首尼日利亚流行歌曲的 Spotify 音频特征</a>，看看能不能自动分出几类「音乐口味」。</p>
+
+<h2 id="s1">一、聚类是什么：和监督学习的分工</h2>
+
+<div class="kb-lead">
+  <div class="kb-icon">01</div>
+  <div>聚类属于<b>无监督学习</b>：输入没有对应的标准答案，算法按「相似度」把样本归堆，堆内尽量近、堆间尽量远。</div>
+</div>
+
+<div class="kb-def">
+  <div class="kb-def-item">
+    <span class="kb-word">聚类 Clustering</span>
+    <p>自动把相似对象归成组（cluster）。适合数据没标签、或者你想先探索数据结构的场景。</p>
+  </div>
+  <div class="kb-def-item">
+    <span class="kb-word">分类 Classification</span>
+    <p>先有带标签的训练集，学会映射关系再预测新样本。有标签时优先用它，别硬上聚类。</p>
+  </div>
+  <div class="kb-def-item">
+    <span class="kb-word">聚类的典型用途</span>
+    <p>市场细分、异常/欺诈检测、搜索结果分组、医学影像分型；还能用「簇 ID」代替原始记录来保护隐私。</p>
+  </div>
+</div>
+
+<h3>1.1 算法家族：形状决定选择</h3>
+
+<div class="kb-table-wrap">
+  <table>
+    <thead>
+      <tr><th scope="col">类型</th><th scope="col">思路</th><th scope="col">代表算法</th><th scope="col">适合的数据形状</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>层次聚类</td><td>按样本间的远近一层层合并/分裂</td><td>Agglomerative、Ward</td><td>簇有嵌套结构、数量不定</td></tr>
+      <tr><td>质心聚类</td><td>先定 k，再找 k 个中心点，样本归到最近的中心</td><td><b>K-Means</b></td><td>簇大致是「球状」、大小相近</td></tr>
+      <tr><td>分布聚类</td><td>假设数据由若干概率分布混合生成，算归属概率</td><td>Gaussian Mixture</td><td>可用统计分布描述</td></tr>
+      <tr><td>密度聚类</td><td>按点的稠密程度连成片，稀疏区的点算噪声</td><td>DBSCAN、OPTICS、Mean-shift</td><td>非平坦几何、簇大小不均、有离群点</td></tr>
+      <tr><td>网格聚类</td><td>把空间划成网格单元再合并</td><td>BIRCH（也常用于大规模+离群点）</td><td>多维、数据量大</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="kb-callout">
+  <b>教材里几个容易卡住的黑话</b>：<br>
+  · <b>flat / non-flat geometry</b>：距离是走直线（欧氏）还是沿曲面（非欧氏）算，决定该用哪类算法。<br>
+  · <b>inductive / transductive</b>：前者学成通用规则再套用到新数据；后者先把这批数据（含未知样本）一起分组再贴标签，遇到训练集里没有的新类别时，transductive 更稳。<br>
+  · <b>constrained</b>：人工加「必须同类 / 必须不同类」的约束，相当于给无监督掺一点监督信号。<br>
+  · <b>density</b>：点扎堆的紧密程度，密度不均的数据用 K-Means 效果通常很差。
+</div>
+
+<h2 id="s2">二、第一讲：先可视化，再决定要不要聚</h2>
+
+<div class="kb-lead">
+  <div class="kb-icon">02</div>
+  <div>聚类极大地依赖可视化。<b>在跑算法之前，先画图看看数据到底长什么样</b>——这一步直接决定了后面选什么算法、以及结果可不可信。</div>
+</div>
+
+<h3>2.1 数据长什么样</h3>
+
+<div class="kb-code-wrap">
+  <span class="kb-code-lang">python</span>
+  <pre><code>import matplotlib.pyplot as plt
+import pandas as pd
+import seaborn as sns
+
+df = pd.read_csv("../data/nigerian-songs.csv")
+df.info()          # 530 行 × 16 列，无缺失
+df.describe()</code></pre>
+</div>
+
+<p>16 列里 4 列是文本（name / album / artist / artist_top_genre），其余是 Spotify 的音频特征：<code>popularity</code>、<code>danceability</code>、<code>acousticness</code>、<code>energy</code>、<code>instrumentalness</code>、<code>liveness</code>、<code>loudness</code>、<code>speechiness</code>、<code>tempo</code>、<code>time_signature</code>。</p>
+
+<div class="kb-callout">
+  <b>教材自己的反问很有意思</b>：「既然是无监督方法，为什么数据里还有标签？」答案是——<b>标签在探索阶段有用，但聚类算法本身不需要它</b>。这正好给了后面一个作弊式的检验手段：聚完再看簇和真实流派对不对得上。
+</div>
+
+<h3>2.2 清洗：两刀砍掉噪声</h3>
+
+<div class="kb-code-wrap">
+  <span class="kb-code-lang">python</span>
+  <pre><code>df = df[df['artist_top_genre'] != 'Missing']        # Spotify 没分类的，去掉
+df = df[(df['artist_top_genre'] == 'afro dancehall') |
+        (df['artist_top_genre'] == 'afropop') |
+        (df['artist_top_genre'] == 'nigerian pop')]  # 只留三大流派
+df = df[df['popularity'] > 0]                        # popularity=0 表示没有排名，视为噪声</code></pre>
+</div>
+
+<p>我在本地跑了一遍过滤后的结果（教材只说「三大流派占主导」，没给数字）：</p>
+
+<div class="kb-table-wrap">
+  <table>
+    <thead>
+      <tr><th scope="col">流派</th><th scope="col">样本数</th><th scope="col">占比</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>afro dancehall</td><td>206</td><td>72.0%</td></tr>
+      <tr><td>afropop</td><td>61</td><td>21.3%</td></tr>
+      <tr><td>nigerian pop</td><td>19</td><td>6.6%</td></tr>
+      <tr><td><b>合计</b></td><td><b>286</b></td><td>100%</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<p>530 → 286，而且<strong>三大流派内部极度不平衡</strong>（206 : 61 : 19）。这个数字后面很关键——它基本预告了聚类结果不会太理想。</p>
+
+<h3>2.3 相关性热力图：几乎没有强相关</h3>
+
+<div class="kb-code-wrap">
+  <span class="kb-code-lang">python</span>
+  <pre><code>corrmat = df.corr(numeric_only=True)
+f, ax = plt.subplots(figsize=(12, 9))
+sns.heatmap(corrmat, vmax=.8, square=True)</code></pre>
+</div>
+
+<p>实测下来只有一对强相关：<code>energy</code> 与 <code>loudness</code> 相关系数 <strong>0.724</strong>（响的歌通常更有能量，符合直觉）。而大家最关心的 <code>popularity</code> 与 <code>danceability</code> 只有 <strong>0.07</strong>，基本无关。</p>
+
+<h3>2.4 KDE 与散点图：三个流派根本分不开</h3>
+
+<div class="kb-code-wrap">
+  <span class="kb-code-lang">python</span>
+  <pre><code>sns.set_theme(style="ticks")
+g = sns.jointplot(data=df, x="popularity", y="danceability",
+                  hue="artist_top_genre", kind="kde")
+
+sns.FacetGrid(df, hue="artist_top_genre", height=5) \
+   .map(plt.scatter, "popularity", "danceability") \
+   .add_legend()</code></pre>
+</div>
+
+<p>两张图都显示：<strong>三个流派围绕同一个中心形成同心圆，互相严重重叠</strong>。教材原话是「determining clusters in this loosely-aligned data will be a challenge」——可视化阶段就已经把结论摆出来了，后面 K-Means 表现平平一点都不意外。</p>
+
+<div class="kb-callout">
+  <b>这一讲真正的方法论</b>：聚类不是「丢给算法就完事」。先画箱线图看离群点、画相关性看冗余特征、画散点/KDE 看分布形状，<b>再决定用哪种算法、选哪些列</b>。跳过这一步，后面所有指标都是自欺欺人。
+</div>
+
+<h2 id="s3">三、第二讲：K-Means 怎么跑，k 怎么定</h2>
+
+<div class="kb-lead">
+  <div class="kb-icon">03</div>
+  <div>K-Means 是质心聚类的代表：<b>先定 k 个中心，然后「分配 → 更新 → 再分配」循环到稳定</b>。它最大的限制是你得事先告诉它 k 是多少。</div>
+</div>
+
+<h3>3.1 三步迭代（教材版）</h3>
+
+<div class="kb-flow">
+  <div class="kb-step"><b>① 选中心</b><small>采样出 k 个初始质心</small></div>
+  <div class="kb-arrow">→</div>
+  <div class="kb-step"><b>② 分配</b><small>每个点归到最近质心</small></div>
+  <div class="kb-arrow">→</div>
+  <div class="kb-step"><b>③ 更新</b><small>取簇内均值作新质心</small></div>
+  <div class="kb-arrow">→</div>
+  <div class="kb-goal"><b>收敛</b><small>质心不再移动</small></div>
+</div>
+<p class="kb-flow-note">②③ 反复循环，直到新旧质心的差异足够小</p>
+
+<p>直觉上可以把结果想成 <strong>Voronoi 图</strong>：每个质心有自己一块「势力范围」，范围内的点都归它。代码非常短：</p>
+
+<div class="kb-code-wrap">
+  <span class="kb-code-lang">python</span>
+  <pre><code>from sklearn.preprocessing import LabelEncoder
+from sklearn.cluster import KMeans
+
+le = LabelEncoder()
+X = df.loc[:, ('artist_top_genre','popularity','danceability',
+               'acousticness','loudness','energy')].copy()
+y = df['artist_top_genre']
+X['artist_top_genre'] = le.fit_transform(X['artist_top_genre'])
+y_enc = le.transform(y)
+
+km = KMeans(n_clusters=3, random_state=0)
+y_cluster_kmeans = km.fit_predict(X)</code></pre>
+</div>
+
+<div class="kb-callout">
+  <b>我加的一个小改动</b>：教材写 <code>X = df.loc[:, (...)]</code> 然后直接赋值 <code>X['artist_top_genre'] = ...</code>，这会触发 pandas 的 <code>SettingWithCopyWarning</code>（因为 <code>.loc</code> 返回的可能只是视图）。稳妥做法像上面那样加一个 <code>.copy()</code>。
+</div>
+
+<h3>3.2 内部指标：silhouette 与 inertia / WCSS</h3>
+
+<div class="kb-table-wrap">
+  <table>
+    <thead>
+      <tr><th scope="col">指标</th><th scope="col">含义</th><th scope="col">怎么看</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>inertia_</code> / <b>WCSS</b></td><td>每个点到自己簇质心的平方距离之和（簇内平方和）</td><td>越小越紧凑；只能横向比较，没有绝对标准</td></tr>
+      <tr><td><b>silhouette</b></td><td>同一簇内的紧密程度 vs 与最近邻簇的分离程度，取值 −1 ~ 1</td><td>越接近 1 越好；接近 0 说明簇之间重叠</td></tr>
+      <tr><td><b>ARI</b>（外部指标）</td><td>在已知真实标签时，衡量两个划分的一致程度</td><td>0 = 随机，1 = 完全一致</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h3>3.3 肘部法则：实测 WCSS 曲线</h3>
+
+<div class="kb-code-wrap">
+  <span class="kb-code-lang">python</span>
+  <pre><code>wcss = []
+for i in range(1, 11):
+    kmeans = KMeans(n_clusters=i, init='k-means++', random_state=42)
+    kmeans.fit(X)
+    wcss.append(kmeans.inertia_)
+
+sns.lineplot(x=range(1, 11), y=wcss, marker='o', color='red')
+plt.title('Elbow'); plt.xlabel('Number of clusters'); plt.ylabel('WCSS')</code></pre>
+</div>
+
+<p>我本地跑出来的 WCSS（未标准化的数据）：</p>
+
+<div class="kb-table-wrap">
+  <table>
+    <thead>
+      <tr><th scope="col">k</th><th scope="col">1</th><th scope="col">2</th><th scope="col">3</th><th scope="col">4</th><th scope="col">5</th><th scope="col">6</th><th scope="col">7</th><th scope="col">8</th><th scope="col">9</th><th scope="col">10</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>WCSS</td><td>91387</td><td>28634</td><td>13100</td><td>8691</td><td>6003</td><td>4620</td><td>3988</td><td>3545</td><td>3287</td><td>3043</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<p>k 从 1 到 2 掉了 69%，2 到 3 又掉 54%，3 之后降幅明显趋缓——<strong>拐点确实在 2~3 之间</strong>，教材猜的 3 站得住。不过要注意：这里的「3」有一半是我们<em>事先知道有三个流派</em>才预设的，肘部图给的是「2 也可以」。</p>
+
+<p>再扫一遍不同 k 的轮廓系数（未标准化）：</p>
+
+<div class="kb-table-wrap">
+  <table>
+    <thead>
+      <tr><th scope="col">k</th><th scope="col">2</th><th scope="col">3</th><th scope="col">4</th><th scope="col">5</th><th scope="col">6</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>silhouette</td><td><b>0.563</b></td><td>0.547</td><td>0.506</td><td>0.479</td><td>0.463</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<p>教材取 k=3 得到 <strong>0.53</strong>（我这边 random_state=0 下是 0.547，量级一致），并说「这个分数处在中间，说明数据不太适合这类聚类」——判断是对的，但真正的原因要到下一节才看得清。</p>
+
+<h2 id="s4">四、量纲陷阱：本模块最重要的一课</h2>
+
+<div class="kb-lead">
+  <div class="kb-icon">04</div>
+  <div>K-Means 用欧氏距离。<b>谁的数值范围大，谁就主导距离</b>——不标准化，就等于把聚类交给量纲最大的那一列。</div>
+</div>
+
+<p>看一下参与聚类的六列各自的取值范围（我实测的）：</p>
+
+<div class="kb-table-wrap">
+  <table>
+    <thead>
+      <tr><th scope="col">特征</th><th scope="col">min</th><th scope="col">max</th><th scope="col">标准差</th><th scope="col">在距离里的权重</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>popularity</code></td><td>1</td><td>73</td><td><b>17.73</b></td><td>几乎独裁</td></tr>
+      <tr><td><code>loudness</code></td><td>−19.36</td><td>−0.12</td><td>2.40</td><td>次要</td></tr>
+      <tr><td><code>artist_top_genre</code></td><td>0</td><td>2</td><td>0.60</td><td>很小</td></tr>
+      <tr><td><code>acousticness</code></td><td>0.001</td><td>0.871</td><td>0.203</td><td>很小</td></tr>
+      <tr><td><code>energy</code></td><td>0.111</td><td>0.995</td><td>0.144</td><td>很小</td></tr>
+      <tr><td><code>danceability</code></td><td>0.255</td><td>0.951</td><td>0.112</td><td>很小</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<p><code>popularity</code> 的标准差是 <code>danceability</code> 的 <strong>158 倍</strong>。这意味着欧氏距离几乎只反映 popularity 的差异，其他五个特征≈摆设。于是我做了一次对照实验：</p>
+
+<div class="kb-code-wrap">
+  <span class="kb-code-lang">python</span>
+  <pre><code>from sklearn.preprocessing import StandardScaler
+from sklearn import metrics
+
+Xs = StandardScaler().fit_transform(X)
+labels_s = KMeans(n_clusters=3, random_state=0).fit_predict(Xs)
+
+print("未缩放 silhouette:", metrics.silhouette_score(X,  y_cluster_kmeans))   # 0.547
+print("缩放后 silhouette:", metrics.silhouette_score(Xs, labels_s))           # 0.192
+print("未缩放 ARI:", metrics.adjusted_rand_score(y_enc, y_cluster_kmeans))    # 0.018
+print("缩放后 ARI:", metrics.adjusted_rand_score(y_enc, labels_s))            # 0.164</code></pre>
+</div>
+
+<div class="kb-table-wrap">
+  <table>
+    <thead>
+      <tr><th scope="col"></th><th scope="col">silhouette（内部指标）</th><th scope="col">ARI vs 真实流派（外部指标）</th><th scope="col">结论</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><b>未标准化</b></td><td><b>0.547</b>（好看）</td><td><b>0.018</b>（≈随机）</td><td>分数漂亮，但只分出了「人气高/中/低」</td></tr>
+      <tr><td><b>标准化后</b></td><td>0.192（难看）</td><td><b>0.164</b>（有弱信号）</td><td>簇变松散，却和真实流派更一致</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="kb-callout kb-warn">
+  <b>这是本篇最反直觉、也最值钱的一个结果</b>：标准化让 silhouette 从 0.547 掉到 0.192，看起来「变差了」，但它与真实流派的一致性（ARI）反而从 0.018 涨到 0.164。<br><br>
+  原因：不缩放时 popularity 一手遮天，算法把歌按人气高低切成三档，切得干净利落 → silhouette 高；可人气跟流派没关系 → ARI ≈ 0（跟随机分组差不多）。<b>高 silhouette 只是「簇分得整齐」，不代表「分得有意义」。</b>
+</div>
+
+<p>教材在 Challenge 里也给了同样的提示：scale 之后「silhouette 会下降、肘部图的拐点会变平滑」，我这边实测完全吻合（缩放后的 WCSS 曲线：1716 → 1336 → 1148 → 1030 → 969 → 867 → 816 → 773 → 730 → 675，下降明显更平缓）。</p>
+
+<h2 id="s5">五、别用 accuracy 评价聚类（教材这里有个坑）</h2>
+
+<p>教材这一段代码，我建议不要照抄：</p>
+
+<div class="kb-code-wrap">
+  <span class="kb-code-lang">python</span>
+  <pre><code>labels = kmeans.labels_
+correct_labels = sum(y == labels)
+print("Result: %d out of %d samples were correctly labeled." % (correct_labels, y.size))
+print('Accuracy score: {0:0.2f}'.format(correct_labels / float(y.size)))</code></pre>
+</div>
+
+<p>它的问题在于：<strong>聚类的簇编号是任意的</strong>。K-Means 输出的 0/1/2 只是「第几个簇」，<code>LabelEncoder</code> 给出的 0/1/2 是「第几个流派」，两者之间<b>没有任何对应关系</b>。直接相减比较，等于假设「簇 0 恰好就是 afro dancehall」——纯属巧合。极端情况下，把簇的编号整体换一下（0↔2），accuracy 会从 0.39 跳到别的值，但聚类结果本身一点没变。</p>
+
+<p>我实测的结果正好演示了这个荒谬：</p>
+
+<div class="kb-table-wrap">
+  <table>
+    <thead>
+      <tr><th scope="col">评价方式</th><th scope="col">未标准化</th><th scope="col">标准化后</th><th scope="col">是否可信</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>sum(y == labels) / n</code></td><td>0.388</td><td>0.577</td><td><b>不可信</b>，受编号排列影响</td></tr>
+      <tr><td><code>adjusted_rand_score</code></td><td>0.018</td><td>0.164</td><td>可信，与编号无关</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="kb-callout">
+  <b>正确的做法</b>：有真实标签时，用「划分一致性」类指标，它们都对标签重命名免疫——<code>adjusted_rand_score</code>、<code>homogeneity_score</code>、<code>completeness_score</code>、<code>v_measure_score</code>、<code>normalized_mutual_info_score</code>。没有标签时，就老实用 silhouette / inertia / Calinski-Harabasz 这类内部指标，并配合可视化人工检查。
+</div>
+
+<h2 id="pitfalls">六、我踩到/发现的坑</h2>
+
+<div class="kb-timeline">
+  <div class="kb-tl-item">
+    <span class="kb-tl-year">坑 1</span>
+    <b>拿 accuracy 评价聚类</b>
+    <p>簇编号与真实标签编号没有对应关系，<code>sum(y == labels)</code> 的结果毫无意义。要用 ARI / V-measure。</p>
+  </div>
+  <div class="kb-tl-item">
+    <span class="kb-tl-year">坑 2</span>
+    <b>忘了标准化，popularity 一家独大</b>
+    <p>它的标准差是其他列的几十到上百倍，欧氏距离被它垄断，聚类变成「按人气分档」。K-Means 之前先 <code>StandardScaler</code> 基本是默认动作。</p>
+  </div>
+  <div class="kb-tl-item">
+    <span class="kb-tl-year">坑 3</span>
+    <b>把 silhouette 当成「聚得好」的证明</b>
+    <p>它只衡量簇内紧、簇间远，是内部指标。本例未缩放时 0.547 分很高，ARI 却只有 0.018。指标高 ≠ 有意义。</p>
+  </div>
+  <div class="kb-tl-item">
+    <span class="kb-tl-year">坑 4</span>
+    <b>数据本身就不适合聚类</b>
+    <p>三大流派 206 : 61 : 19 严重失衡，KDE 图上完全重叠，特征间几乎无相关（只有 energy~loudness 0.724）。这种情况下换算法也救不回来——教材最后那句「too imbalanced, too little correlated, too much variance」是诚实的总结。</p>
+  </div>
+  <div class="kb-tl-item">
+    <span class="kb-tl-year">坑 5</span>
+    <b>把类别列直接编码进特征</b>
+    <p><code>artist_top_genre</code> 被 <code>LabelEncoder</code> 编成 0/1/2 后当作连续数值参与距离计算，等于偷偷假设「afropop 到 nigerian pop 的距离 = 1，且介于 dancehall 之间」。合理的做法是用 One-Hot，或者干脆不把它放进 X。</p>
+  </div>
+</div>
+
+<h2 id="conclusion">结语</h2>
+
+<div class="kb-conclusion">
+  <ol>
+    <li><b>有标签就用分类，没标签才用聚类。</b>聚类是在「数据没答案」时找结构的探索工具，它的产出是「分组假设」，不是「标准答案」。</li>
+    <li><b>先可视化，再选算法。</b>箱线图看离群点、热力图看冗余、散点/KDE 看形状——数据长什么样决定了 K-Means、DBSCAN、层次聚类该选哪个。</li>
+    <li><b>K-Means 前必须标准化。</b>欧氏距离对量纲极度敏感，不缩放就等于让数值范围最大的那一列独自决定分组。</li>
+    <li><b>k 用肘部法则 + 轮廓系数一起定。</b>本例 WCSS 拐点在 2~3，轮廓系数 k=2（0.563）还略高于 k=3（0.547），说明「因为有 3 个流派就取 k=3」只是先验，不是数据给出的结论。</li>
+    <li><b>内部指标好看不代表有意义。</b>silhouette 0.547 配 ARI 0.018 就是活生生的反例：簇分得整齐，但分的是人气不是流派。</li>
+    <li><b>评价聚类别用 accuracy。</b>簇编号任意，用 ARI / V-measure 这类对重命名免疫的指标。</li>
+  </ol>
+</div>
+
+<div class="kb-source">
+  内容来源：微软 <a href="https://github.com/microsoft/ML-For-Beginners">ML for Beginners</a> 第五模块 <a href="https://github.com/microsoft/ML-For-Beginners/tree/main/5-Clustering">5-Clustering</a>（1-Visualize / 2-K-Means）；数据集来自 <a href="https://www.kaggle.com/sootersaalu/nigerian-songs-spotify">Kaggle: Nigerian Songs (Spotify)</a>。文中所有 silhouette / WCSS / ARI 数字均为我在课程虚拟环境（pandas + scikit-learn）本地实测所得，随机种子与教材略有差异，量级一致。
+</div>
+
+</div>
