@@ -116,6 +116,8 @@ tags:
 
 <p>前面三个模块都在做有监督学习——数据带着标签，模型照着答案学。这一模块换了个玩法：<strong>数据没有标签（或者你故意不用标签）</strong>，让算法自己去找结构。教材用了一份很有意思的数据：<a href="https://www.kaggle.com/sootersaalu/nigerian-songs-spotify">530 首尼日利亚流行歌曲的 Spotify 音频特征</a>，看看能不能自动分出几类「音乐口味」。</p>
 
+<p>顺带一个冷知识：<strong>聚类分析诞生于 1930 年代的人类学与心理学</strong>，比「机器学习」这个词早得多——它本质上是一种「整理混沌」的古老需求。教材给的类比也很贴切：<em>你面前有一堆洗好的衣服，要按家庭成员分开</em>。没人给你标准答案，只能靠「这件像爸爸的、那件像妹妹的」来分——这就是聚类。</p>
+
 <h2 id="s1">一、聚类是什么：和监督学习的分工</h2>
 
 <div class="kb-lead">
@@ -160,7 +162,36 @@ tags:
   · <b>flat / non-flat geometry</b>：距离是走直线（欧氏）还是沿曲面（非欧氏）算，决定该用哪类算法。<br>
   · <b>inductive / transductive</b>：前者学成通用规则再套用到新数据；后者先把这批数据（含未知样本）一起分组再贴标签，遇到训练集里没有的新类别时，transductive 更稳。<br>
   · <b>constrained</b>：人工加「必须同类 / 必须不同类」的约束，相当于给无监督掺一点监督信号。<br>
-  · <b>density</b>：点扎堆的紧密程度，密度不均的数据用 K-Means 效果通常很差。
+  · <b>density</b>：点扎堆的紧密程度，密度不均的数据用 K-Means 效果通常很差。<br>
+  · <b>centroid / clustroid</b>：质心是簇内所有点取平均得到的「中心」（未必是真实存在的样本）；簇心是簇内<b>离其他点最近的那个真实样本</b>。欧氏距离那套用质心，非欧氏距离那套用不了「平均」，只能退而求其次用簇心。
+</div>
+
+<h3>1.2 Scikit-learn 选型速查表（教材原表重排）</h3>
+
+<p>教材列了 sklearn 支持的十种方法与适用场景，我按「能不能推广到新样本」重新排了一遍，这一维在生产环境里最容易被忽略：</p>
+
+<div class="kb-table-wrap">
+  <table>
+    <thead>
+      <tr><th scope="col">方法</th><th scope="col">适用数据</th><th scope="col">能否直接给新样本分组</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><b>K-Means</b></td><td>通用；球状簇、大小相近</td><td>能（inductive）</td></tr>
+      <tr><td>Gaussian mixtures</td><td>平坦几何，可用分布描述</td><td>能（inductive）</td></tr>
+      <tr><td>BIRCH</td><td>数据量大、含离群点</td><td>能（inductive）</td></tr>
+      <tr><td>Affinity propagation</td><td>簇多且大小不均</td><td>能（inductive）</td></tr>
+      <tr><td>Mean-shift</td><td>簇多且大小不均</td><td>能（inductive）</td></tr>
+      <tr><td>Spectral clustering</td><td>簇少且均匀</td><td>不能（transductive）</td></tr>
+      <tr><td>Ward hierarchical</td><td>簇多、带约束</td><td>不能（transductive）</td></tr>
+      <tr><td>Agglomerative</td><td>簇多、带约束、非欧距离</td><td>不能（transductive）</td></tr>
+      <tr><td><b>DBSCAN</b></td><td>非平坦几何、簇大小不均</td><td>不能（transductive）</td></tr>
+      <tr><td>OPTICS</td><td>非平坦几何、密度不均</td><td>不能（transductive）</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="kb-callout">
+  <b>这张表不用背，记住一条就够</b>：<b>inductive 学出通用规则，来了新数据可以直接 <code>predict</code>；transductive 只在这批数据内部划分，新数据来了得整批重跑。</b>如果你的场景是「每天新增用户要自动归入已有分群」，那就只能从上面 inductive 的那几个里选。
 </div>
 
 <h2 id="s2">二、第一讲：先可视化，再决定要不要聚</h2>

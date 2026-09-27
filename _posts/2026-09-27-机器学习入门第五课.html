@@ -1,0 +1,517 @@
+---
+title: 机器学习入门第五课：从图灵测试到 51 万条酒店评论，五讲把 NLP 跑通
+layout: post
+author: 陈家辉
+tags:
+  - 人工智能
+  - 机器学习
+  - NLP
+  - 情感分析
+  - 学习笔记
+---
+
+<style>
+/* ========== 文章美化样式（作用域限定在 .kb-article 内，避免影响全局） ========== */
+.kb-article{line-height:1.9;font-size:16px}
+.kb-article h2{font-size:1.45em;margin:2.2em 0 .8em;padding-bottom:.35em;border-bottom:2px solid #eef0f6;color:#1f2430;position:relative;font-weight:700}
+.kb-article h3{font-size:1.15em;margin:1.6em 0 .6em;color:#333a4b;font-weight:700}
+.kb-article p{margin:.6em 0 1em}
+.kb-article ul,.kb-article ol{padding-left:1.4em;margin:.6em 0 1.1em}
+.kb-article li{margin:.35em 0}
+/* 顶部元信息 */
+.kb-meta{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:#f5f7fb;border:1px solid #e7ecf5;border-radius:10px;padding:10px 16px;margin:0 0 26px;color:#5a6478;font-size:.92em}
+.kb-chip{background:#e8effd;color:#2b5fd9;border-radius:20px;padding:2px 12px;font-size:.85em;white-space:nowrap}
+/* Hero 核心结论卡 */
+.kb-hero{background:linear-gradient(135deg,#0d9488 0%,#4f6ef7 60%,#7c3aed 100%);color:#fff;border-radius:16px;padding:30px 28px;margin:6px 0 26px;box-shadow:0 12px 30px rgba(80,70,229,.28);text-align:center}
+.kb-hero .kb-hero-label{font-size:.85em;letter-spacing:4px;opacity:.85;margin-bottom:12px;font-weight:600}
+.kb-hero .kb-hero-formula{font-size:clamp(1.15rem,2.4vw,1.7rem);font-weight:800;line-height:1.5;margin:0 0 14px}
+.kb-hero .kb-hero-formula .plus{color:#ffe08a;margin:0 8px}
+.kb-hero p{margin:0;font-size:.98em;opacity:.95;max-width:760px;margin:0 auto}
+/* 章节入口条（非标题） */
+.kb-lead{display:flex;align-items:center;gap:14px;background:#fbfcff;border:1px solid #e8edf8;border-radius:12px;padding:16px 18px;margin:1.4em 0}
+.kb-lead .kb-icon{flex:none;width:44px;height:44px;border-radius:50%;background:#e8effd;color:#2b5fd9;font-weight:800;font-size:1.15em;display:flex;align-items:center;justify-content:center}
+.kb-lead b{color:#2b5fd9}
+/* 定义卡 */
+.kb-def{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin:1em 0 1.4em}
+.kb-def-item{background:#fafbfe;border:1px solid #e9edf6;border-left:4px solid #4f6ef7;border-radius:10px;padding:16px 18px}
+.kb-def-item h3{margin:0 0 8px;font-size:1.05em}
+.kb-def-item .kb-word{font-weight:700;color:#4f6ef7;font-size:1.12em;display:block;margin-bottom:4px}
+.kb-def-item p{margin:0;font-size:.95em}
+/* 卡片网格 */
+.kb-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin:1em 0 1.4em}
+.kb-grid .kb-card{background:#fff;border:1px solid #e7ebf4;border-radius:12px;padding:16px 16px 14px;transition:transform .15s ease,box-shadow .15s ease}
+.kb-grid .kb-card:hover{transform:translateY(-3px);box-shadow:0 8px 20px rgba(31,45,120,.10)}
+.kb-grid .kb-card .kb-num{display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:30px;border-radius:9px;background:#eef2ff;color:#3d5bf5;font-weight:800;font-size:.92em;margin-bottom:8px;padding:0 8px}
+.kb-grid .kb-card b{display:block;font-size:1em;margin-bottom:4px}
+.kb-grid .kb-card p{margin:0;font-size:.93em;color:#4b5568}
+.kb-grid .kb-card.kb-bad .kb-num{background:#fef1f1;color:#d64550}
+.kb-grid .kb-card.kb-bad b{color:#d64550}
+/* 表格 */
+.kb-table-wrap{overflow-x:auto;margin:1em 0 1.4em;border-radius:12px;border:1px solid #e7ebf4}
+.kb-table-wrap table{width:100%;border-collapse:collapse;background:#fff;font-size:.95em;margin:0}
+.kb-table-wrap thead th{background:#f0f4ff;color:#1f2d5c;font-weight:700;text-align:left;padding:11px 16px;white-space:nowrap;border-bottom:2px solid #dbe4fb}
+.kb-table-wrap tbody td{padding:11px 16px;border-bottom:1px solid #eef1f7;vertical-align:top;color:#3a4152}
+.kb-table-wrap tbody tr:last-child td{border-bottom:none}
+.kb-table-wrap tbody tr:nth-child(even){background:#fafbfe}
+.kb-table-wrap tbody tr:hover{background:#f3f6ff}
+.kb-table-wrap code{background:#f0f2f7;color:#c7254e;border-radius:4px;padding:1px 6px;font-size:.92em}
+/* 流程条 */
+.kb-flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:8px;justify-content:center;background:#f8f9fd;border:1px dashed #cdd6ea;border-radius:14px;padding:20px 16px;margin:1.2em 0}
+.kb-flow .kb-step{flex:1 1 150px;max-width:200px;background:#fff;border:1px solid #dfe5f2;border-radius:10px;padding:12px 10px;text-align:center}
+.kb-flow .kb-step b{display:block;font-size:.92em;color:#22315f;margin-bottom:2px}
+.kb-flow .kb-step small{color:#7b8396;font-size:.8em;line-height:1.4;display:block}
+.kb-flow .kb-arrow{display:flex;align-items:center;color:#4f6ef7;font-weight:800;font-size:1.2em;padding:0 2px}
+.kb-flow .kb-goal{flex:1 1 150px;max-width:200px;background:linear-gradient(135deg,#22c55e,#16a34a);border:none;border-radius:10px;padding:12px 10px;text-align:center;color:#fff}
+.kb-flow .kb-goal b{display:block;font-size:.92em;margin-bottom:2px}
+.kb-flow .kb-goal small{font-size:.8em;opacity:.92;display:block;line-height:1.4}
+.kb-flow-note{text-align:center;color:#7b8396;font-size:.85em;margin:-.4em 0 1.4em}
+/* 时间线 */
+.kb-timeline{position:relative;margin:1.4em 0 1.6em;padding-left:26px}
+.kb-timeline::before{content:"";position:absolute;left:7px;top:6px;bottom:6px;width:2px;background:linear-gradient(180deg,#4f6ef7,#9b3df0)}
+.kb-tl-item{position:relative;margin:0 0 18px;padding:14px 18px;background:#fff;border:1px solid #e7ebf4;border-radius:12px}
+.kb-tl-item::before{content:"";position:absolute;left:-24px;top:20px;width:12px;height:12px;border-radius:50%;background:#4f6ef7;border:3px solid #fff;box-shadow:0 0 0 2px #4f6ef7}
+.kb-tl-item .kb-tl-year{display:inline-block;background:#eef2ff;color:#3d5bf5;border-radius:6px;font-size:.8em;font-weight:700;padding:2px 10px;margin-right:10px}
+.kb-tl-item b{display:inline;font-size:1.05em;margin:0}
+.kb-tl-item .kb-tl-q{color:#8a93a6;font-size:.85em;margin:6px 0 4px}
+.kb-tl-item p{margin:0;font-size:.95em}
+/* 引用 callout */
+.kb-callout{background:#fff7ea;border:1px solid #ffe0b0;border-left:4px solid #f5a623;border-radius:10px;padding:12px 16px;margin:1.2em 0;font-size:.95em;color:#5a4a1f}
+.kb-callout b{color:#b26a00}
+.kb-callout.kb-warn{background:#fff1f1;border-color:#ffd0d0;border-left-color:#e5484d;color:#5c2b2b}
+.kb-callout.kb-warn b{color:#c02a2a}
+/* 代码块 */
+.kb-code-wrap{position:relative;margin:1em 0 1.4em}
+.kb-code-wrap .kb-code-lang{position:absolute;top:0;right:0;background:#e6ebfb;color:#3d5bf5;font-size:.75em;font-weight:700;padding:2px 10px;border-radius:0 10px 0 10px;letter-spacing:.5px}
+.kb-article pre{background:#1f2430;color:#e6edf3;border-radius:10px;padding:18px 20px 16px;overflow-x:auto;margin:0;font-size:.88em;line-height:1.7;font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace}
+.kb-article pre code{background:none;color:inherit;padding:0;border-radius:0;font-size:1em;white-space:pre}
+.kb-article code{background:#f0f2f7;color:#c7254e;border-radius:4px;padding:1px 6px;font-size:.92em}
+/* 结论列表 */
+.kb-conclusion{background:#f6f8ff;border:1px solid #dde6ff;border-radius:14px;padding:20px 20px 8px;margin:1.2em 0}
+.kb-conclusion ol{margin:0;padding-left:0;list-style:none;counter-reset:concl}
+.kb-conclusion li{counter-increment:concl;position:relative;padding:6px 0 10px 44px;border-bottom:1px dashed #e2e9fb}
+.kb-conclusion li:last-child{border-bottom:none}
+.kb-conclusion li::before{content:counter(concl);position:absolute;left:0;top:8px;width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#4f6ef7,#9b3df0);color:#fff;font-weight:800;font-size:.95em;display:flex;align-items:center;justify-content:center}
+.kb-conclusion b{color:#27409e}
+/* 来源 */
+.kb-source{margin-top:2em;padding:14px 18px;background:#f8f9fb;border-left:3px solid #c8d2e8;border-radius:0 8px 8px 0;font-size:.9em;color:#6b7280}
+.kb-source a{color:#4f6ef7;text-decoration:none}
+@media (max-width:767px){.kb-flow .kb-arrow{transform:rotate(90deg);padding:2px 0}.kb-hero{padding:22px 16px}}
+</style>
+
+<div class="kb-article">
+
+<div class="kb-meta">
+  <span>读书笔记 · 微软 ML for Beginners 第六模块（6-NLP）五讲归纳 + 本地实测</span>
+  <span class="kb-chip">NLP</span>
+  <span class="kb-chip">TextBlob</span>
+  <span class="kb-chip">NLTK</span>
+  <span class="kb-chip">VADER</span>
+  <span class="kb-chip">情感分析</span>
+</div>
+
+<div class="kb-hero">
+  <div class="kb-hero-label">一句话掌握全篇</div>
+  <div class="kb-hero-formula">文本 <span class="plus">→</span> 分词 / 词频 / 词向量 <span class="plus">→</span> 可计算的数字<br>但「读懂意思」至今仍是难题</div>
+  <p>五讲从图灵测试一路做到 51 万条酒店评论的情感分析。我最大的收获反而是：<strong>NLP 八成的功夫花在数据清洗和「认清数据有多脏」上，模型本身只占两成</strong>——光是把 2428 个杂乱标签收敛成 8 个可用字段，就吃掉了整整一讲。</p>
+</div>
+
+<p>前面几个模块处理的都是<strong>数字</strong>。这个模块换成<strong>人话</strong>：文本不能直接喂给模型，得先拆开、数字化，而且「意思」这东西比数值难搞得多——尤其是<strong>幽默和讽刺</strong>。教材选了个很有意思的载体：先跟《傲慢与偏见》里的伊丽莎白和达西聊天，再拿欧洲 51 万条真实酒店评论做情感分析。</p>
+
+<h2 id="s1">一、NLP 是什么，从哪来</h2>
+
+<div class="kb-lead">
+  <div class="kb-icon">01</div>
+  <div>NLP 源自<b>计算语言学</b>，目标让机器处理「自然语言」。它已经存在 50 多年，但「真正理解一句话」至今没解决。</div>
+</div>
+
+<div class="kb-def">
+  <div class="kb-def-item">
+    <span class="kb-word">计算语言学</span>
+    <p>研究了几十年：让计算机能处理、理解、翻译、交流语言。偏学术、偏语言学。</p>
+  </div>
+  <div class="kb-def-item">
+    <span class="kb-word">NLP</span>
+    <p>它的工程侧支：让计算机<b>处理</b>人类的口语和书面语。拼写检查、机器翻译、搜索、舆情分析都是它。</p>
+  </div>
+  <div class="kb-def-item">
+    <span class="kb-word">真正的难点</span>
+    <p>不是分词、不是词性，而是<b>理解意思</b>——尤其幽默与讽刺。这一句后面会反复出现。</p>
+  </div>
+</div>
+
+<h3>1.1 三段简史</h3>
+
+<div class="kb-timeline">
+  <div class="kb-tl-item">
+    <span class="kb-tl-year">1950s</span>
+    <b>图灵测试</b>
+    <div class="kb-tl-q">人通过打字跟对方对话，如果分不清对面是人还是机器，能说机器在「思考」吗？</div>
+    <p>灵感来自派对游戏「模仿游戏」：提问者靠纸条提问，判断隔壁房间两人的性别，而对方会故意误导。</p>
+  </div>
+  <div class="kb-tl-item">
+    <span class="kb-tl-year">1960s</span>
+    <b>ELIZA：第一个「心理治疗师」聊天机器人</b>
+    <div class="kb-tl-q">MIT 的 Joseph Weizenbaum 开发，能提问、看上去像在听你说话。</div>
+    <p>它把 <code>I am sad</code> 改写、换时态，回一句 <code>How long have you been sad</code>——<b>只是关键词匹配 + 句式套模板，完全不理解</b>。遇到匹配不上的输入就随机回一句。用户写「你是一辆自行车」，它会回「我当自行车多久了？」。</p>
+  </div>
+  <div class="kb-tl-item">
+    <span class="kb-tl-year">今天</span>
+    <b>仍然没解决的那一半</b>
+    <div class="kb-tl-q">几十年前科幻作家预言人类主要靠说话操作电脑，结果比所有人想象的都难。</div>
+    <p>「听写转文字」已经很好用了，但<b>理解句子的意思、情绪、讽刺</b>依然是开放问题。</p>
+  </div>
+</div>
+
+<div class="kb-callout">
+  <b>第一讲的作业很有意思</b>：用 6 句随机回复（"That is quite interesting, please tell me more."）写一个叫 Marvin 的机器人。它<b>一个字都不理解</b>，但你会发现——靠随机应答，对话居然能撑好几个回合。这就是图灵测试至今仍有现实意义的原因：<b>「看起来懂」和「真的懂」是两件事</b>。
+</div>
+
+<h2 id="s2">二、九种常见任务（术语扫盲）</h2>
+
+<div class="kb-lead">
+  <div class="kb-icon">02</div>
+  <div>任何 NLP 流程基本都是<b>按顺序执行这些任务</b>：先拆开，再标注，再统计，最后才算语义。</div>
+</div>
+
+<div class="kb-table-wrap">
+  <table>
+    <thead>
+      <tr><th scope="col">任务</th><th scope="col">做什么</th><th scope="col">例子（教材原句）</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><b>分词</b> Tokenization</td><td>把文本切成 token / 单词</td><td>要处理标点和不同语言的分隔符，其实不简单</td></tr>
+      <tr><td><b>词嵌入</b> Embeddings</td><td>把词转成数值向量，语义相近的词在向量空间里挨着</td><td>'toy' 会和 'disney'、'lego'、'playstation' 聚在一起</td></tr>
+      <tr><td><b>词性标注</b> POS tagging</td><td>每个 token 标成名词 / 动词 / 形容词</td><td>fox = 名词，jumped = 动词</td></tr>
+      <tr><td><b>句法分析</b> Parsing</td><td>识别词与词之间的<b>修饰关系</b></td><td>「quick red fox jumped」是一段，「lazy brown dog」是另一段</td></tr>
+      <tr><td><b>词频</b> Frequencies</td><td>建词典，数每个词 / 短语出现几次</td><td>Kipling 的诗里 <code>the</code> 出现 6 次，<code>a friend</code> 2 次</td></tr>
+      <tr><td><b>N-gram</b></td><td>按固定长度切词组：unigram / bigram / trigram</td><td>bigram 把句子切成 9 个二词组合</td></tr>
+      <tr><td><b>名词短语提取</b></td><td>找出句子的主语 / 宾语（英文里常跟在 a / an / the 后面）</td><td><code>quick red fox</code>、<code>lazy brown dog</code></td></tr>
+      <tr><td><b>词形变化</b> Inflection</td><td>取单复数</td><td>cat ↔ cats</td></tr>
+      <tr><td><b>词元还原</b> Lemmatization</td><td>还原到词根（lemma）</td><td>flew / flies / flying → <b>fly</b></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="kb-callout">
+  <b>N-gram 的直觉</b>：把它想成一个<b>在句子上滑动的窗口</b>。窗口宽 3，每次右移一格，就得到一个 trigram。它保留了「词序」信息——这是单纯词频做不到的。<br><br>
+  <b>另一个必备工具：WordNet</b>。普林斯顿维护的词库，包含同义词、反义词等信息，做翻译、拼写检查都靠它。
+</div>
+
+<h3>2.1 情感分析的两个维度</h3>
+
+<p>教材的定义要记牢：</p>
+
+<ul>
+  <li><b>polarity（极性）</b>：−1.0 ~ 1.0，越负越负面，越正越正面</li>
+  <li><b>subjectivity（主观性）</b>：0.0 ~ 1.0，0 = 最客观，1 = 最主观</li>
+</ul>
+
+<h2 id="s3">三、翻译与情感分析：教材第一个跑不通的例子</h2>
+
+<div class="kb-lead">
+  <div class="kb-icon">03</div>
+  <div>第 3 讲有两个练习：<b>翻译已经彻底跑不通了，情感分析仍然好用</b>。这一节我把两次实测都摊开。</div>
+</div>
+
+<h3>3.1 <code>blob.translate()</code> 已经不存在了</h3>
+
+<div class="kb-code-wrap">
+  <span class="kb-code-lang">python</span>
+  <pre><code>from textblob import TextBlob
+blob = TextBlob("It is a truth universally acknowledged, ...")
+print(blob.translate(to="fr"))</code></pre>
+</div>
+
+<p>我在本地（textblob 0.20.1）实测 <code>AttributeError: 'TextBlob' object has no attribute 'translate'</code>。原因不是装漏了依赖——<b>这个模块在包里压根不存在了</b>（包内只有 <code>blob.py</code>、<code>taggers.py</code>、<code>np_extractors.py</code>，没有 <code>translate.py</code>）。而教材自己的 solution notebook 里保存的输出，就是这个一模一样的报错。</p>
+
+<div class="kb-callout kb-warn">
+  <b>降级到旧版也救不回来</b>：<code>translate()</code> 背后调的是 Google 翻译的免费端点，Google 早已封锁，旧版常见报错是 <code>'NoneType' object has no attribute 'group'</code>。加上我这环境 <code>translate.google.com</code> 根本不可达——<b>这个功能在当前条件下是死路，别浪费时间，直接跳过</b>。<br><br>
+  教材那句 "you need an internet connection to use <code>blob.translate</code>" 现在得改成：<b>你还需要一个能连 Google 的网络和一个 2019 年的 textblob</b>。
+</div>
+
+<h3>3.2 情感分析：可用，而且结果很有意思</h3>
+
+<div class="kb-code-wrap">
+  <span class="kb-code-lang">python</span>
+  <pre><code>quote1 = "It is a truth universally acknowledged, that a single man in possession of a good fortune, must be in want of a wife."
+quote2 = "Darcy, as well as Elizabeth, really loved them; and they were both ever sensible of the warmest gratitude ..."
+
+print(TextBlob(quote1).sentiment)
+print(TextBlob(quote2).sentiment)</code></pre>
+</div>
+
+<p>我本地实测（与教材一致）：</p>
+
+<div class="kb-table-wrap">
+  <table>
+    <thead>
+      <tr><th scope="col">句子</th><th scope="col">polarity</th><th scope="col">subjectivity</th><th scope="col">解读</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>开篇名句（quote1）</td><td><b>0.210</b></td><td>0.271</td><td>冷嘲热讽：数值上略偏正面，但主观性低 → 像陈述「事实」</td></tr>
+      <tr><td>结尾大团圆（quote2）</td><td><b>0.700</b></td><td>0.800</td><td>明确正面 + 高度主观</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<p>教材顺势出了个很有味道的 Challenge：把《傲慢与偏见》全文跑一遍，统计 polarity 恰为 <b>±1</b> 的「绝对句」谁更多。然后它列了 8 句被判为「绝对正面」的句子让你自己判断——其中三句其实<b>并不正面</b>：</p>
+
+<div class="kb-grid">
+  <div class="kb-card kb-bad"><span class="kb-num">1</span><b>"Happy shall I be, when his stay at Netherfield is over!"</b><p>判为正面。其实是反话——「他走了我才高兴」是在骂人。</p></div>
+  <div class="kb-card kb-bad"><span class="kb-num">2</span><b>"If I could but see you as happy!"</b><p>判为正面。前提是「你要是能开心就好了」= 你现在很惨。</p></div>
+  <div class="kb-card kb-bad"><span class="kb-num">3</span><b>"Our distress, my dear Lizzy, is very great."</b><p>判为正面。<code>great</code> 是正面词，但它修饰的是 <code>distress</code>（痛苦）。</p></div>
+</div>
+
+<div class="kb-callout">
+  <b>这就是整个模块的核心矛盾</b>：情感分析只认<b>词</b>，不认<b>语境</b>；更认不出讽刺。教材点得很透——简·奥斯汀笔下人物「professing opinions which in fact are not your own」，人类读者能品出来，模型品不出来。
+</div>
+
+<h2 id="s4">四、51 万条酒店评论：EDA 才是重头戏</h2>
+
+<div class="kb-lead">
+  <div class="kb-icon">04</div>
+  <div>第 4 讲整讲<b>一个模型都没建</b>，全在做探索性数据分析。它要证明一件事：<b>不把数据摸透就直接上 NLP，得出的结论全是假的</b>。</div>
+</div>
+
+<p>数据集：<a href="https://www.kaggle.com/jiashenliu/515k-hotel-reviews-data-in-europe">515K Hotel Reviews Data in Europe</a>，从 Booking.com 抓的公开数据，覆盖 6 座城市 1493 家酒店，<strong>515,738 行 × 17 列</strong>（解压后约 230 MB）。</p>
+
+<h3>4.1 17 列按用途分成四组</h3>
+
+<div class="kb-table-wrap">
+  <table>
+    <thead>
+      <tr><th scope="col">分组</th><th scope="col">字段</th><th scope="col">坑点</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>酒店</td><td><code>Hotel_Name</code> / <code>Hotel_Address</code> / <code>lat</code> / <code>lng</code></td><td>地址没用，后面被替换成「城市, 国家」</td></tr>
+      <tr><td>酒店总评</td><td><code>Average_Score</code> / <code>Total_Number_of_Reviews</code> / <code>Additional_Number_of_Scoring</code></td><td><b>三列互相对不上</b>，见下节</td></tr>
+      <tr><td>评论</td><td><code>Reviewer_Score</code> / <code>Negative_Review</code> / <code>Positive_Review</code> / <code>Tags</code> / 字数 / 日期</td><td>没写内容时填的是字符串 <code>"No Negative"</code>，<b>不是空值</b></td></tr>
+      <tr><td>评论者</td><td><code>Reviewer_Nationality</code> / 累计评论数</td><td>评论者没有唯一 ID，无法串联</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h3>4.2 三列数字互相对不上</h3>
+
+<p>教材拿评论最多的 <em>Britannia International Hotel Canary Wharf</em> 开刀：</p>
+
+<div class="kb-table-wrap">
+  <table>
+    <thead>
+      <tr><th scope="col">口径</th><th scope="col">数值</th><th scope="col">说明</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>数据集里实际能数出来的评论</td><td>4789</td><td>真实可见</td></tr>
+      <tr><td><code>Total_Number_of_Reviews</code> 列声称</td><td>9086</td><td>差了 4297</td></tr>
+      <tr><td>再加上 <code>Additional_Number_of_Scoring</code></td><td>4789 + 2682 = 7471</td><td><b>仍差 1615</b>，补不齐</td></tr>
+      <tr><td><code>Average_Score</code> 声称</td><td>7.1</td><td>自己算出来是 <b>6.8</b></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<p>于是教材的做法是：<strong>别信它，自己算。</strong> 加一列 <code>Calc_Average_Score</code>，然后看偏差分布——最大偏差只有 1.3 分（Kube Hotel Ice Bar），绝大多数在 ±1 以内，所以「用自己算的」是安全的。</p>
+
+<h3>4.3 没写评论的行，以及一个 50 倍的性能差</h3>
+
+<div class="kb-table-wrap">
+  <table>
+    <thead>
+      <tr><th scope="col">情况</th><th scope="col">行数</th><th scope="col">占比</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>Negative_Review</code> = "No Negative"</td><td>127,890</td><td>24.8%</td></tr>
+      <tr><td><code>Positive_Review</code> = "No Positive"</td><td>35,946</td><td>7.0%</td></tr>
+      <tr><td><b>两边都没写</b></td><td><b>127</b></td><td>0.02%</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<p>有 127 条评论者给了分数、却一个字都没写。教材说这不影响大局，但值得警觉：<strong>一份「评论数据集」里居然存在没有评论的行</strong>。</p>
+
+<p>更有意思的是教材给的性能对照——统计这些行数，两种写法差了 <strong>50 倍</strong>：</p>
+
+<div class="kb-code-wrap">
+  <span class="kb-code-lang">python</span>
+  <pre><code># 慢：9.64 秒 —— 对 51 万行逐行 apply lambda
+no_negative_reviews = df.apply(lambda x: True if x['Negative_Review'] == "No Negative" else False, axis=1)
+print(len(no_negative_reviews[no_negative_reviews == True].index))
+
+# 快：0.19 秒 —— 布尔 Series 直接 sum
+no_negative_reviews = sum(df.Negative_Review == "No Negative")</code></pre>
+</div>
+
+<div class="kb-callout">
+  <b>这条值得单独记</b>：pandas 里 <code>df.apply(..., axis=1)</code> 是<b>逐行 Python 函数调用</b>，51 万行就是 51 万次函数调用；而 <code>df.Col == "x"</code> 是<b>向量化</b>的 C 层比较。<b>能向量化就别 apply</b>。
+</div>
+
+<h3>4.4 两处必须严肃对待的伦理提醒</h3>
+
+<div class="kb-callout kb-warn">
+  <b>① 别把国籍当情绪原因。</b> 教材原话很重：认为「某些国籍的人更爱给差评」是<b>国家或种族刻板印象</b>。每个评论者都是基于自己的经历打分——受过往住店经验、旅途劳顿、个人性格影响。<b>把 nationality 当特征喂进模型，动机很难站得住</b>。（这正是第 1 单元公平性里 <em>over/under-representation</em> 与偏见的老问题。）
+</div>
+
+<div class="kb-callout kb-warn">
+  <b>② 别自己去读那些差评。</b> 教材特意提醒：公开网站爬来的数据里，有些差评是<b>种族歧视、性别歧视、年龄歧视</b>的。你会看到「天气不好」这种酒店根本控制不了的抱怨，也会看到让人不适的内容。<b>让代码去算情绪，别让人去读</b>。
+</div>
+
+<h2 id="s5">五、清洗 + VADER：把 2428 个标签收敛成 8 个</h2>
+
+<div class="kb-lead">
+  <div class="kb-icon">05</div>
+  <div>最后一讲做两件事：<b>把脏标签变成可用字段</b>，<b>用 VADER 给每条评论打情绪分</b>。</div>
+</div>
+
+<div class="kb-flow">
+  <div class="kb-step"><b>① Hotel_Reviews.csv</b><small>51.5 万 × 17 列</small></div>
+  <div class="kb-arrow">→</div>
+  <div class="kb-step"><b>② 过滤</b><small>删列、重算均分、Tags 转 8 列</small></div>
+  <div class="kb-arrow">→</div>
+  <div class="kb-step"><b>③ 去停用词</b><small>3.3 秒</small></div>
+  <div class="kb-arrow">→</div>
+  <div class="kb-goal"><b>④ VADER 打分</b><small>约 120 秒</small></div>
+</div>
+<p class="kb-flow-note">产出 Hotel_Reviews_Filtered.csv → Hotel_Reviews_NLP.csv</p>
+
+<h3>5.1 Tags：2428 个 → 8 个</h3>
+
+<p><code>Tags</code> 列存的是「文本形式的列表」，<b>顺序不固定、长度 3~6 个不等</b>。硬拆会得到 2428 个不同的标签。教材的做法是先清洗（去方括号和引号），再按出现频次人工筛——判断标准是「<b>这个标签对推荐酒店有没有用</b>」：</p>
+
+<div class="kb-table-wrap">
+  <table>
+    <thead>
+      <tr><th scope="col">保留（有用）</th><th scope="col">次数</th><th scope="col">丢弃（无用）</th><th scope="col">理由</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Leisure trip</td><td>417,778</td><td>Submitted from a mobile device（307,640）</td><td>提交设备与酒店无关</td></tr>
+      <tr><td>Couple</td><td>252,294</td><td>Stayed 1/2/3… nights（19 万+）</td><td>住几晚和满意度关系牵强</td></tr>
+      <tr><td>Solo traveler</td><td>108,545</td><td>Double Room / Superior Double…（各 1~3 万）</td><td>房型各家酒店都有，无区分度</td></tr>
+      <tr><td>Business trip</td><td>82,939</td><td rowspan="5" style="vertical-align:middle">房型名称有几十种变体（Classic / Deluxe / Executive…），<b>标准化成本极高</b>，直接放弃</td></tr>
+      <tr><td>Group（合并 Travellers with friends）</td><td>67,535</td></tr>
+      <tr><td>Family with young children</td><td>61,015</td></tr>
+      <tr><td>Family with older children</td><td>26,349</td></tr>
+      <tr><td>With a pet</td><td>1,405</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="kb-code-wrap">
+  <span class="kb-code-lang">python</span>
+  <pre><code>df.Tags = df.Tags.str.strip("[']")
+df.Tags = df.Tags.str.replace(" ', '", ",", regex=False)
+
+df["Leisure_trip"] = df.Tags.apply(lambda tag: 1 if "Leisure trip" in tag else 0)
+df["Couple"]       = df.Tags.apply(lambda tag: 1 if "Couple" in tag else 0)
+# ... 共 8 列，命中为 1 否则 0</code></pre>
+</div>
+
+<div class="kb-callout">
+  <b>这一步的方法论比代码重要</b>：不是「把标签都标准化」（教材说很难，因为 <em>Superior Queen Room with Courtyard Garden or City View</em> 根本无从映射），而是<b>退一步问「我要拿它做什么」，然后只保留对目标有用的那几个</b>。这就是 EDA 的价值——先看过数据，才知道能偷多少懒。
+</div>
+
+<h3>5.2 去停用词：395 → 195</h3>
+
+<p>停用词是不影响情绪的常用词（the / a / is …）。教材实测：最长的那条差评 <strong>395 词 → 195 词</strong>，砍掉一半；51 万行两列全部处理只要 <strong>3.3 秒</strong>，而情感分析要 12~14 分钟，所以这一步很划算。</p>
+
+<div class="kb-code-wrap">
+  <span class="kb-code-lang">python</span>
+  <pre><code>cache = set(stopwords.words("english"))       # 放进 set，查找 O(1)
+def remove_stopwords(review):
+    return " ".join([w for w in review.split() if w not in cache])
+
+df.Negative_Review = df.Negative_Review.apply(remove_stopwords)
+df.Positive_Review = df.Positive_Review.apply(remove_stopwords)</code></pre>
+</div>
+
+<h3>5.3 VADER 打分</h3>
+
+<p>VADER 是<b>基于规则 + 词典</b>的情感分析器（Hutto & Gilbert, 2014），专为社交媒体文本设计。它输出一个 <code>compound</code> 分数，同样在 −1 ~ 1 之间：</p>
+
+<div class="kb-code-wrap">
+  <span class="kb-code-lang">python</span>
+  <pre><code>from nltk.sentiment.vader import SentimentIntensityAnalyzer
+vader_sentiment = SentimentIntensityAnalyzer()
+
+def calc_sentiment(review):
+    if review == "No Negative" or review == "No Positive":
+        return 0                      # 没写内容就记 0，别让空值污染
+    return vader_sentiment.polarity_scores(review)["compound"]
+
+df["Negative_Sentiment"] = df.Negative_Review.apply(calc_sentiment)
+df["Positive_Sentiment"] = df.Positive_Review.apply(calc_sentiment)</code></pre>
+</div>
+
+<p>教材的验证思路很聪明：<strong>拿情绪分去跟评论者自己打的分数对撞</strong>。如果「差评」文本被判成 +1（极正面）而评分却很低，那要么文本与分数不符，要么分析器错了——<strong>而且讽刺是重灾区</strong>。教材原话举的例子是 <em>"Of course I LOVED sleeping in a room with no heating"</em>。</p>
+
+<p>我把这句真跑了一遍，VADER 确实翻车：</p>
+
+<div class="kb-table-wrap">
+  <table>
+    <thead>
+      <tr><th scope="col">句子（我本地实测）</th><th scope="col">compound</th><th scope="col">是否判对</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>The hotel was absolutely wonderful</td><td><b>+0.612</b></td><td>✅</td></tr>
+      <tr><td>The heating was broken and the staff were rude</td><td><b>−0.727</b></td><td>✅</td></tr>
+      <tr><td>Of course I LOVED sleeping in a room with no heating</td><td><b>+0.532</b></td><td>❌ 讽刺，被判成正面</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="kb-callout kb-warn">
+  <b>这就是 NLP 现在的天花板</b>：字面全是正面词（LOVED），实际意思完全相反。教材说得很实在——<b>你应该预期有一部分情绪分是彻底错的，而且往往能解释得通</b>（讽刺、反语、双重否定）。所以别把情感分当成事实，它只是<b>一个有噪声的特征</b>。
+</div>
+
+<h2 id="pitfalls">六、我踩到的坑</h2>
+
+<div class="kb-timeline">
+  <div class="kb-tl-item">
+    <span class="kb-tl-year">坑 1</span>
+    <b>NLTK 数据不会随 pip 一起装</b>
+    <p>第 2 讲用 <code>ConllExtractor</code> 提名词短语，直接报 <code>Resource 'punkt_tab' not found</code>。它要 <b>punkt_tab</b>（分句）+ <b>conll2000</b>（训练分块器）两个包。装上后 <code>TextBlob('...', np_extractor=ConllExtractor()).noun_phrases</code> 才正常。</p>
+  </div>
+  <div class="kb-tl-item">
+    <span class="kb-tl-year">坑 2</span>
+    <b><code>nltk.download()</code> 在我这环境是坏的</b>
+    <p>先报 <code>refusing a proxied fetch</code>（NLTK 拒绝代理下载），设 <code>NLTK_ALLOW_PROXIED_URLOPEN=1</code> 放行后又报 <code>CERTIFICATE_VERIFY_FAILED</code>（代理做 SSL 中间人）。<b>解法：绕开 downloader</b>，用 curl 从 jsDelivr 的 nltk_data 镜像直接下 zip 解压到 <code>~/nltk_data</code>。</p>
+  </div>
+  <div class="kb-tl-item">
+    <span class="kb-tl-year">坑 3</span>
+    <b>vader_lexicon 必须保持 .zip，不能解压！</b>
+    <p>我按惯例解压到 <code>~/nltk_data/sentiment/vader_lexicon/</code>，结果仍然 <code>Resource 'vader_lexicon' not found</code>。翻源码才发现 NLTK 要的是 <code>sentiment/vader_lexicon.zip/vader_lexicon/vader_lexicon.txt</code>——<b>它自己会读 zip 内部</b>。把 zip 原样放进去就好了。</p>
+  </div>
+  <div class="kb-tl-item">
+    <span class="kb-tl-year">坑 4</span>
+    <b><code>textblob.translate()</code> 已被移除</b>
+    <p>0.20.1 包里根本没有这个模块，加上 Google 端点已封、网络不可达，<b>不要再尝试，直接跳到第 3.2 节的情感分析</b>。</p>
+  </div>
+  <div class="kb-tl-item">
+    <span class="kb-tl-year">坑 5</span>
+    <b>数据集不在仓库里</b>
+    <p><code>6-NLP/data/</code> 只有一个 README，<code>Hotel_Reviews.csv</code>（约 230 MB）要自己从 Kaggle 下。<b>第 4、5 讲的所有代码都依赖它</b>，下载前那两讲跑不了。</p>
+  </div>
+  <div class="kb-tl-item">
+    <span class="kb-tl-year">坑 6</span>
+    <b>NLTK 3.10 改了包命名</b>
+    <p>词性标注模型已改名为 <code>averaged_perceptron_tagger_eng</code>，装老名字 <code>averaged_perceptron_tagger</code> 会报 <code>MissingCorpusError</code>。TextBlob 默认的 <code>FastNPExtractor</code> 还需要 <b>brown</b> 语料。</p>
+  </div>
+</div>
+
+<h2 id="conclusion">结语</h2>
+
+<div class="kb-conclusion">
+  <ol>
+    <li><b>NLP 的瓶颈在「懂意思」，不在「拆得开」。</b> 分词、词性、词频都很成熟；幽默、讽刺、反语至今是开放问题——VADER 把「我可太喜欢没暖气的房间了」判成 +0.532 就是活例子。</li>
+    <li><b>「看起来懂」≠「真的懂」。</b> 1966 年的 ELIZA 靠换时态就能唬人，今天靠随机应答的 Marvin 也还能撑几个回合。图灵测试打的是<em>观感</em>，不是<em>理解</em>。</li>
+    <li><b>EDA 比模型重要。</b> 第 4 讲整讲没建模型，却揪出了三列数字互相对不上、24.8% 的差评是空字符串、127 条没有任何评论的行、2428 个无法标准化的标签。<b>直接上模型的结论全是假的。</b></li>
+    <li><b>官方给的聚合值要先验证再用。</b> <code>Average_Score</code> 和 <code>Total_Number_of_Reviews</code> 都算不平；教材的处理是「自己算一遍，偏差在 ±1 内就用自己的」。</li>
+    <li><b>pandas 能向量化就别 apply。</b> 同一个统计，<code>df.apply(lambda)</code> 耗时 9.64 秒，<code>sum(df.Col == "x")</code> 只要 0.19 秒——<b>50 倍</b>。</li>
+    <li><b>情感分只是有噪声的特征，不是事实。</b> 要跟用户自己打的分数交叉验证；更要警惕把 <code>Reviewer_Nationality</code> 这类字段当情绪归因，那是刻板印象，也踩第 1 单元的公平性红线。</li>
+    <li><b>环境坑比算法坑多。</b> NLTK 数据包要手动装、<code>nltk.download()</code> 可能被代理拦、<code>vader_lexicon</code> 不能解压、<code>translate()</code> 已失效——这些跟 NLP 本身无关，但会吃掉你一整个下午。</li>
+  </ol>
+</div>
+
+<div class="kb-source">
+  内容来源：微软 <a href="https://github.com/microsoft/ML-For-Beginners">ML for Beginners</a> 第六模块 <a href="https://github.com/microsoft/ML-For-Beginners/tree/main/6-NLP">6-NLP</a>（1-Introduction-to-NLP / 2-Tasks / 3-Translation-Sentiment / 4-Hotel-Reviews-1 / 5-Hotel-Reviews-2）；数据集 <a href="https://www.kaggle.com/jiashenliu/515k-hotel-reviews-data-in-europe">515K Hotel Reviews Data in Europe</a>（Kaggle，CC0，抓取自 Booking.com）。文中 VADER compound 分数、punkt_tab / translate 的报错均为我在本地（textblob 0.20.1 + nltk 3.10.3）实测所得；数据集相关统计数字引自教材。
+</div>
+
+</div>

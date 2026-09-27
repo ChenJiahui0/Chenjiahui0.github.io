@@ -1,0 +1,495 @@
+---
+title: 机器学习入门第六课：ARIMA 与 SVR，用三年电力负荷预测下一小时
+layout: post
+author: 陈家辉
+tags:
+  - 人工智能
+  - 机器学习
+  - 时间序列
+  - ARIMA
+  - SVR
+  - 学习笔记
+---
+
+<style>
+/* ========== 文章美化样式（作用域限定在 .kb-article 内，避免影响全局） ========== */
+.kb-article{line-height:1.9;font-size:16px}
+.kb-article h2{font-size:1.45em;margin:2.2em 0 .8em;padding-bottom:.35em;border-bottom:2px solid #eef0f6;color:#1f2430;position:relative;font-weight:700}
+.kb-article h3{font-size:1.15em;margin:1.6em 0 .6em;color:#333a4b;font-weight:700}
+.kb-article p{margin:.6em 0 1em}
+.kb-article ul,.kb-article ol{padding-left:1.4em;margin:.6em 0 1.1em}
+.kb-article li{margin:.35em 0}
+/* 顶部元信息 */
+.kb-meta{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:#f5f7fb;border:1px solid #e7ecf5;border-radius:10px;padding:10px 16px;margin:0 0 26px;color:#5a6478;font-size:.92em}
+.kb-chip{background:#e8effd;color:#2b5fd9;border-radius:20px;padding:2px 12px;font-size:.85em;white-space:nowrap}
+/* Hero 核心结论卡 */
+.kb-hero{background:linear-gradient(135deg,#0d9488 0%,#4f6ef7 60%,#7c3aed 100%);color:#fff;border-radius:16px;padding:30px 28px;margin:6px 0 26px;box-shadow:0 12px 30px rgba(80,70,229,.28);text-align:center}
+.kb-hero .kb-hero-label{font-size:.85em;letter-spacing:4px;opacity:.85;margin-bottom:12px;font-weight:600}
+.kb-hero .kb-hero-formula{font-size:clamp(1.15rem,2.4vw,1.7rem);font-weight:800;line-height:1.5;margin:0 0 14px}
+.kb-hero .kb-hero-formula .plus{color:#ffe08a;margin:0 8px}
+.kb-hero p{margin:0;font-size:.98em;opacity:.95;max-width:760px;margin:0 auto}
+/* 章节入口条（非标题） */
+.kb-lead{display:flex;align-items:center;gap:14px;background:#fbfcff;border:1px solid #e8edf8;border-radius:12px;padding:16px 18px;margin:1.4em 0}
+.kb-lead .kb-icon{flex:none;width:44px;height:44px;border-radius:50%;background:#e8effd;color:#2b5fd9;font-weight:800;font-size:1.15em;display:flex;align-items:center;justify-content:center}
+.kb-lead b{color:#2b5fd9}
+/* 定义卡 */
+.kb-def{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin:1em 0 1.4em}
+.kb-def-item{background:#fafbfe;border:1px solid #e9edf6;border-left:4px solid #4f6ef7;border-radius:10px;padding:16px 18px}
+.kb-def-item h3{margin:0 0 8px;font-size:1.05em}
+.kb-def-item .kb-word{font-weight:700;color:#4f6ef7;font-size:1.12em;display:block;margin-bottom:4px}
+.kb-def-item p{margin:0;font-size:.95em}
+/* 卡片网格 */
+.kb-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin:1em 0 1.4em}
+.kb-grid .kb-card{background:#fff;border:1px solid #e7ebf4;border-radius:12px;padding:16px 16px 14px;transition:transform .15s ease,box-shadow .15s ease}
+.kb-grid .kb-card:hover{transform:translateY(-3px);box-shadow:0 8px 20px rgba(31,45,120,.10)}
+.kb-grid .kb-card .kb-num{display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:30px;border-radius:9px;background:#eef2ff;color:#3d5bf5;font-weight:800;font-size:.92em;margin-bottom:8px;padding:0 8px}
+.kb-grid .kb-card b{display:block;font-size:1em;margin-bottom:4px}
+.kb-grid .kb-card p{margin:0;font-size:.93em;color:#4b5568}
+.kb-grid .kb-card.kb-bad .kb-num{background:#fef1f1;color:#d64550}
+.kb-grid .kb-card.kb-bad b{color:#d64550}
+/* 表格 */
+.kb-table-wrap{overflow-x:auto;margin:1em 0 1.4em;border-radius:12px;border:1px solid #e7ebf4}
+.kb-table-wrap table{width:100%;border-collapse:collapse;background:#fff;font-size:.95em;margin:0}
+.kb-table-wrap thead th{background:#f0f4ff;color:#1f2d5c;font-weight:700;text-align:left;padding:11px 16px;white-space:nowrap;border-bottom:2px solid #dbe4fb}
+.kb-table-wrap tbody td{padding:11px 16px;border-bottom:1px solid #eef1f7;vertical-align:top;color:#3a4152}
+.kb-table-wrap tbody tr:last-child td{border-bottom:none}
+.kb-table-wrap tbody tr:nth-child(even){background:#fafbfe}
+.kb-table-wrap tbody tr:hover{background:#f3f6ff}
+.kb-table-wrap code{background:#f0f2f7;color:#c7254e;border-radius:4px;padding:1px 6px;font-size:.92em}
+/* 流程条 */
+.kb-flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:8px;justify-content:center;background:#f8f9fd;border:1px dashed #cdd6ea;border-radius:14px;padding:20px 16px;margin:1.2em 0}
+.kb-flow .kb-step{flex:1 1 150px;max-width:200px;background:#fff;border:1px solid #dfe5f2;border-radius:10px;padding:12px 10px;text-align:center}
+.kb-flow .kb-step b{display:block;font-size:.92em;color:#22315f;margin-bottom:2px}
+.kb-flow .kb-step small{color:#7b8396;font-size:.8em;line-height:1.4;display:block}
+.kb-flow .kb-arrow{display:flex;align-items:center;color:#4f6ef7;font-weight:800;font-size:1.2em;padding:0 2px}
+.kb-flow .kb-goal{flex:1 1 150px;max-width:200px;background:linear-gradient(135deg,#22c55e,#16a34a);border:none;border-radius:10px;padding:12px 10px;text-align:center;color:#fff}
+.kb-flow .kb-goal b{display:block;font-size:.92em;margin-bottom:2px}
+.kb-flow .kb-goal small{font-size:.8em;opacity:.92;display:block;line-height:1.4}
+.kb-flow-note{text-align:center;color:#7b8396;font-size:.85em;margin:-.4em 0 1.4em}
+/* 时间线 */
+.kb-timeline{position:relative;margin:1.4em 0 1.6em;padding-left:26px}
+.kb-timeline::before{content:"";position:absolute;left:7px;top:6px;bottom:6px;width:2px;background:linear-gradient(180deg,#4f6ef7,#9b3df0)}
+.kb-tl-item{position:relative;margin:0 0 18px;padding:14px 18px;background:#fff;border:1px solid #e7ebf4;border-radius:12px}
+.kb-tl-item::before{content:"";position:absolute;left:-24px;top:20px;width:12px;height:12px;border-radius:50%;background:#4f6ef7;border:3px solid #fff;box-shadow:0 0 0 2px #4f6ef7}
+.kb-tl-item .kb-tl-year{display:inline-block;background:#eef2ff;color:#3d5bf5;border-radius:6px;font-size:.8em;font-weight:700;padding:2px 10px;margin-right:10px}
+.kb-tl-item b{display:inline;font-size:1.05em;margin:0}
+.kb-tl-item .kb-tl-q{color:#8a93a6;font-size:.85em;margin:6px 0 4px}
+.kb-tl-item p{margin:0;font-size:.95em}
+/* 引用 callout */
+.kb-callout{background:#fff7ea;border:1px solid #ffe0b0;border-left:4px solid #f5a623;border-radius:10px;padding:12px 16px;margin:1.2em 0;font-size:.95em;color:#5a4a1f}
+.kb-callout b{color:#b26a00}
+.kb-callout.kb-warn{background:#fff1f1;border-color:#ffd0d0;border-left-color:#e5484d;color:#5c2b2b}
+.kb-callout.kb-warn b{color:#c02a2a}
+/* 代码块 */
+.kb-code-wrap{position:relative;margin:1em 0 1.4em}
+.kb-code-wrap .kb-code-lang{position:absolute;top:0;right:0;background:#e6ebfb;color:#3d5bf5;font-size:.75em;font-weight:700;padding:2px 10px;border-radius:0 10px 0 10px;letter-spacing:.5px}
+.kb-article pre{background:#1f2430;color:#e6edf3;border-radius:10px;padding:18px 20px 16px;overflow-x:auto;margin:0;font-size:.88em;line-height:1.7;font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace}
+.kb-article pre code{background:none;color:inherit;padding:0;border-radius:0;font-size:1em;white-space:pre}
+.kb-article code{background:#f0f2f7;color:#c7254e;border-radius:4px;padding:1px 6px;font-size:.92em}
+/* 结论列表 */
+.kb-conclusion{background:#f6f8ff;border:1px solid #dde6ff;border-radius:14px;padding:20px 20px 8px;margin:1.2em 0}
+.kb-conclusion ol{margin:0;padding-left:0;list-style:none;counter-reset:concl}
+.kb-conclusion li{counter-increment:concl;position:relative;padding:6px 0 10px 44px;border-bottom:1px dashed #e2e9fb}
+.kb-conclusion li:last-child{border-bottom:none}
+.kb-conclusion li::before{content:counter(concl);position:absolute;left:0;top:8px;width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#4f6ef7,#9b3df0);color:#fff;font-weight:800;font-size:.95em;display:flex;align-items:center;justify-content:center}
+.kb-conclusion b{color:#27409e}
+/* 来源 */
+.kb-source{margin-top:2em;padding:14px 18px;background:#f8f9fb;border-left:3px solid #c8d2e8;border-radius:0 8px 8px 0;font-size:.9em;color:#6b7280}
+.kb-source a{color:#4f6ef7;text-decoration:none}
+@media (max-width:767px){.kb-flow .kb-arrow{transform:rotate(90deg);padding:2px 0}.kb-hero{padding:22px 16px}}
+</style>
+
+<div class="kb-article">
+
+<div class="kb-meta">
+  <span>读书笔记 · 微软 ML for Beginners 第七模块（7-TimeSeries）三讲归纳</span>
+  <span class="kb-chip">时间序列</span>
+  <span class="kb-chip">ARIMA</span>
+  <span class="kb-chip">SARIMA</span>
+  <span class="kb-chip">SVR</span>
+  <span class="kb-chip">MAPE</span>
+</div>
+
+<div class="kb-hero">
+  <div class="kb-hero-label">一句话掌握全篇</div>
+  <div class="kb-hero-formula">历史负荷 <span class="plus">→</span> 差分变平稳 <span class="plus">→</span> 拟合 / 核映射 <span class="plus">→</span> 未来值<br>铁律：<b>测试集必须晚于训练集</b></div>
+  <p>三讲做同一件事——用 GEFCom2014 三年每小时电力负荷预测未来负荷，先上经典的 ARIMA，再上能抓非线性的 SVR。我最大的收获是：<strong>时间序列里「怎么切数据」比「选什么模型」更要命</strong>——随机切一刀，模型就偷看了未来，准确率全是假的。</p>
+</div>
+
+<p>前面五个模块的数据基本都是<strong>可交换的</strong>：打乱行顺序不影响建模。时间序列打破了这个前提——<strong>行的顺序本身就是信息</strong>。教材把它比作「水晶球」：靠一个变量过去的表现，预测它未来的值。别看它不如深度学习热门，它直接对口<strong>定价、库存、供应链</strong>，是商业价值最直接的 ML 方向之一。</p>
+
+<h2 id="s1">一、三个定义，别混着用</h2>
+
+<div class="kb-lead">
+  <div class="kb-icon">01</div>
+  <div>教材刻意把 <b>time series / analysis / forecasting</b> 三个词分开讲，因为它们常被当成一回事。</div>
+</div>
+
+<div class="kb-def">
+  <div class="kb-def-item">
+    <span class="kb-word">Time series 时间序列</span>
+    <p>「按时间顺序排列的一串数据点」，通常是<b>等间隔</b>连续采样。例：道琼斯指数的每日收盘价。</p>
+  </div>
+  <div class="kb-def-item">
+    <span class="kb-word">Time series analysis 分析</span>
+    <p>对这类数据做分析，方法有时域、频域、线性、非线性等。还包括 <b>interrupted time series</b>——看某个打断事件前后规律怎么变。</p>
+  </div>
+  <div class="kb-def-item">
+    <span class="kb-word">Time series forecasting 预测</span>
+    <p>用模型<b>基于过去呈现的规律预测未来值</b>。可以用回归（把时间当 x），但最好用专门模型——最常见的就是 ARIMA。</p>
+  </div>
+</div>
+
+<p>教材开了个很生活的头：你维护一片智能停车表，能记录每个车位被使用的频率和时长。能不能根据它过去的表现，按<strong>供需规律</strong>预测未来的收费？高峰期涨价会让找车位的人不爽，但确实是给街道清洁筹钱的办法。</p>
+
+<h3>1.1 本次的数据集</h3>
+
+<p>用的是 <strong>GEFCom2014</strong> 预测竞赛的数据：<strong>2012–2014 三年、每小时</strong>的电力负荷（load）与温度值。任务是「只用历史负荷，往前预测一个时间步」——这就是<strong>单变量时间序列（Univariate Time Series）</strong>，即只有一个随时间变化的变量。</p>
+
+<p>教材还举了 NIST 的经典例子：莫纳罗亚观测站的月度 CO₂ 浓度。1975 年 12 个月从 330.62 一路到 328.41 再回到 330.97——<strong>先降后升，这就是季节性</strong>。</p>
+
+<h2 id="s2">二、六个要看的数据特征（都是「噪声」）</h2>
+
+<div class="kb-lead">
+  <div class="kb-icon">02</div>
+  <div>如果你把时间序列当成一条「信号」，那下面这六样东西就是要<b>先识别、再削弱</b>的噪声。</div>
+</div>
+
+<div class="kb-grid">
+  <div class="kb-card"><span class="kb-num">1</span><b>Trends 趋势</b><p>随时间可度量的上升或下降。要会用，必要时也要会<b>去掉</b>。</p></div>
+  <div class="kb-card"><span class="kb-num">2</span><b>Seasonality 季节性</b><p>周期性波动，比如节假日对销量的影响。</p></div>
+  <div class="kb-card"><span class="kb-num">3</span><b>Outliers 异常值</b><p>远离正常波动范围的点。</p></div>
+  <div class="kb-card"><span class="kb-num">4</span><b>Long-run cycle 长周期</b><p>独立于季节性、跨越更久的周期，比如持续一年以上的经济下行。</p></div>
+  <div class="kb-card"><span class="kb-num">5</span><b>Constant variance 恒定方差</b><p>随时间保持相似的波动幅度，比如用电量的昼夜起伏。</p></div>
+  <div class="kb-card"><span class="kb-num">6</span><b>Abrupt changes 突变</b><p>突然的跃变，需要单独分析。教材举的就是<b>疫情导致企业骤停</b>造成的断点。</p></div>
+</div>
+
+<div class="kb-callout">
+  <b>怎么看出来？</b> 教材第一讲唯一的代码就是画图——先画三年全景，再放大画 2014 年 7 月的第一周。放大之后，<b>日内起伏（昼夜）和周内起伏（工作日/周末）才看得清</b>。这一步不能省。
+</div>
+
+<h2 id="s3">三、ARIMA：把 A-R-I-M-A 拆开</h2>
+
+<div class="kb-lead">
+  <div class="kb-icon">03</div>
+  <div>= <b>A</b>uto<b>R</b>egressive <b>I</b>ntegrated <b>M</b>oving <b>A</b>verage，自回归积分滑动平均。它特别适合拟合<b>非平稳</b>数据。</div>
+</div>
+
+<h3>3.1 两个前置概念</h3>
+
+<div class="kb-def">
+  <div class="kb-def-item">
+    <span class="kb-word">Stationarity 平稳性</span>
+    <p>统计上指数据分布<b>不随时间平移而改变</b>。非平稳数据会因为趋势而波动，必须先变换才能分析——季节性带来的波动可以靠「季节性差分」消掉。</p>
+  </div>
+  <div class="kb-def-item">
+    <span class="kb-word">Differencing 差分</span>
+    <p>把非平稳数据变平稳的手段：去掉<b>非常数的趋势</b>。原文定义很精准——「差分移除时间序列水平上的变化，消除趋势和季节性，从而稳定均值」。</p>
+  </div>
+</div>
+
+<h3>3.2 三个字母各自干什么</h3>
+
+<div class="kb-table-wrap">
+  <table>
+    <thead>
+      <tr><th scope="col">字母</th><th scope="col">含义</th><th scope="col">在做什么</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><b>AR</b> AutoRegressive</td><td>自回归</td><td>「回头看」：用过去的值（叫 <b>lags 滞后值</b>）做假设。形式上是「目标变量对它自己滞后值做回归」。例：每月铅笔销量作为演化变量。</td></tr>
+      <tr><td><b>I</b> Integrated</td><td>积分 / 差分</td><td>ARIMA 区别于 ARMA 的地方：施加<b>差分步骤</b>以消除非平稳性。</td></tr>
+      <tr><td><b>MA</b> Moving Average</td><td>滑动平均</td><td>输出变量由<b>当前和过去的滞后值</b>共同决定。</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h3>3.3 p / d / q 三个参数</h3>
+
+<p>教材说得很直白：这三个参数就是用来刻画时间序列的<strong>季节性、趋势、噪声</strong>三大方面的。</p>
+
+<div class="kb-table-wrap">
+  <table>
+    <thead>
+      <tr><th scope="col">参数</th><th scope="col">对应部分</th><th scope="col">作用</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>p</code></td><td>AR 自回归</td><td>纳入<b>过去</b>多少个值</td></tr>
+      <tr><td><code>d</code></td><td>I 积分</td><td>做<b>几阶差分</b></td></tr>
+      <tr><td><code>q</code></td><td>MA 滑动平均</td><td>纳入多少个过去的预测误差</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="kb-callout">
+  <b>数据有季节性就用 SARIMA</b>：这时还要多一组 <code>P</code>、<code>D</code>、<code>Q</code>，含义与 p/d/q 对应，但管的是<b>季节性分量</b>，外加一个<b>周期长度</b>。本例是小时数据，日周期就是 24。
+</div>
+
+<h2 id="s4">四、动手：ARIMA 建模全流程</h2>
+
+<div class="kb-lead">
+  <div class="kb-icon">04</div>
+  <div>训练 1416 小时、预测未来 3 小时，最后用 <b>walk-forward 前进验证</b> 评估。</div>
+</div>
+
+<div class="kb-flow">
+  <div class="kb-step"><b>① 切分</b><small>训练 1416 / 测试 48</small></div>
+  <div class="kb-arrow">→</div>
+  <div class="kb-step"><b>② 缩放</b><small>MinMaxScaler 到 0~1</small></div>
+  <div class="kb-arrow">→</div>
+  <div class="kb-step"><b>③ 定阶</b><small>order + seasonal_order</small></div>
+  <div class="kb-arrow">→</div>
+  <div class="kb-step"><b>④ 前进验证</b><small>720 小时滑动窗口</small></div>
+  <div class="kb-arrow">→</div>
+  <div class="kb-goal"><b>⑤ MAPE</b><small>单步 0.56%</small></div>
+</div>
+<p class="kb-flow-note">HORIZON = 3，即一次预测未来 3 个小时</p>
+
+<h3>4.1 切分：测试集必须晚于训练集</h3>
+
+<div class="kb-code-wrap">
+  <span class="kb-code-lang">python</span>
+  <pre><code>train_start_dt = '2014-11-01 00:00:00'
+test_start_dt  = '2014-12-30 00:00:00'
+
+train = energy.copy()[(energy.index &gt;= train_start_dt) &amp; (energy.index &lt; test_start_dt)][['load']]
+test  = energy.copy()[energy.index &gt;= test_start_dt][['load']]
+
+# Training data shape:  (1416, 1)
+# Test data shape:      (48, 1)</code></pre>
+</div>
+
+<div class="kb-callout kb-warn">
+  <b>这里是全部三讲最重要的一句话</b>：教材原话——「必须确保测试集覆盖训练集<b>之后</b>的时间段，以保证模型不会从未来时间段获取信息」。这条一旦破坏（比如随机 8:2 切分），MAPE 再漂亮也是自欺欺人。<br><br>
+  而且理由很实在：这份数据<b>日消费有强季节性，但与最近几天最像</b>——所以只用一小段时间窗训练就够了（1416 小时 ≈ 59 天）。
+</div>
+
+<h3>4.2 缩放：只用训练集拟合</h3>
+
+<div class="kb-code-wrap">
+  <span class="kb-code-lang">python</span>
+  <pre><code>scaler = MinMaxScaler()
+train['load'] = scaler.fit_transform(train)   # 只在训练集上 fit
+test['load']  = scaler.transform(test)        # 测试集只做 transform</code></pre>
+</div>
+
+<p>这个顺序不能反。用测试集 <code>fit</code> 就等于把测试集的取值范围泄漏给了模型——是 4.1 那条铁律在特征工程上的延伸。</p>
+
+<h3>4.3 定阶与拟合</h3>
+
+<div class="kb-code-wrap">
+  <span class="kb-code-lang">python</span>
+  <pre><code>from statsmodels.tsa.statespace.sarimax import SARIMAX
+
+order          = (4, 1, 0)        # p=4, d=1, q=0
+seasonal_order = (1, 1, 0, 24)    # P=1, D=1, Q=0, 周期 24 小时
+
+model   = SARIMAX(endog=train, order=order, seasonal_order=seasonal_order)
+results = model.fit()</code></pre>
+</div>
+
+<div class="kb-callout">
+  <b>选参数这件事本身很痛</b>：教材说它「某种程度上主观且耗时」，并建议考虑 <code>pmdarima</code> 库的 <code>auto_arima()</code> 自动搜参。这跟前几课手调超参的思路一致——<b>有自动搜索就别硬猜</b>。
+</div>
+
+<h3>4.4 前进验证（walk-forward）：黄金标准</h3>
+
+<p>思路：从序列开头起，先在训练集上训练，预测下一个时间步；<strong>拿预测值和真实值比对</strong>；然后把真实值并入训练集，再预测下一步，如此循环。</p>
+
+<div class="kb-code-wrap">
+  <span class="kb-code-lang">python</span>
+  <pre><code>training_window = 720          # 固定 30 天（720 小时）
+order           = (2, 1, 0)    # 注意：这里换成了 2，不是上面的 4
+seasonal_order  = (1, 1, 0, 24)
+
+history = [x for x in train_ts][-training_window:]
+
+for t in range(test_ts.shape[0]):
+    model     = SARIMAX(endog=history, order=order, seasonal_order=seasonal_order)
+    model_fit = model.fit()
+    yhat      = model_fit.forecast(steps=HORIZON)
+    predictions.append(yhat)
+
+    obs = list(test_ts.iloc[t])
+    history.append(obs[0])     # 加入真实值
+    history.pop(0)             # 同时从头部丢弃，保持窗口固定</code></pre>
+</div>
+
+<div class="kb-callout">
+  <b>两个易漏的细节</b>：<br>
+  ① <b>窗口要固定</b>——每加一个新观测，就从开头删一个旧的，否则训练成本会一路涨。<br>
+  ② <b>代价是算力</b>：这里 48 步就要重训 48 个 SARIMAX 模型。教材明说「数据小或模型简单时可以接受，规模化时可能成问题」。<br><br>
+  教材把 walk-forward 称为「<b>时间序列模型评估的黄金标准</b>，推荐在你自己的项目中使用」。
+</div>
+
+<h3>4.5 MAPE 与结果</h3>
+
+<p>MAPE 的定义：<strong>每一个预测点上，|实际 − 预测| ÷ 实际，取绝对值求和，再除以点的个数 n</strong>。教材给的直观读法——<strong>MAPE 为 10 就是平均偏了 10%</strong>。</p>
+
+<div class="kb-code-wrap">
+  <span class="kb-code-lang">python</span>
+  <pre><code>eval_df['APE'] = (eval_df['prediction'] - eval_df['actual']).abs() / eval_df['actual']
+print(eval_df.groupby('h')['APE'].mean())</code></pre>
+</div>
+
+<div class="kb-table-wrap">
+  <table>
+    <thead>
+      <tr><th scope="col">口径</th><th scope="col">MAPE</th><th scope="col">含义</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>单步预测（t+1）</td><td><b>0.557%</b></td><td>只预测下一小时，平均偏差不到 0.6%</td></tr>
+      <tr><td>多步预测（t+1~t+3）</td><td><b>1.146%</b></td><td>越往后越不准，误差翻倍</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<p>反归一化后的样例对比（预测 vs 实际）：3008.74 / 3023.00、2955.53 / 2935.00、2900.17 / 2899.00——确实贴得很紧。</p>
+
+<h2 id="s5">五、SVR：为什么还需要一个非线性模型</h2>
+
+<div class="kb-lead">
+  <div class="kb-icon">05</div>
+  <div>ARIMA 是<b>线性</b>统计方法；当序列里的非线性它映射不了时，就轮到 SVR——靠<b>核函数</b>升维来抓非线性。</div>
+</div>
+
+<div class="kb-def">
+  <div class="kb-def-item">
+    <span class="kb-word">SVM</span>
+    <p>特征空间里的一个<b>超平面</b>：分类时当边界，回归时当最佳拟合线。靠<b>核函数</b>把数据映射到更高维空间，使其更容易分开。</p>
+  </div>
+  <div class="kb-def-item">
+    <span class="kb-word">SVR</span>
+    <p>SVM 用于回归的变体：找一条容纳<b>最多数据点</b>的最佳拟合线（在高维里是超平面）。</p>
+  </div>
+  <div class="kb-def-item">
+    <span class="kb-word">为什么用它</span>
+    <p>教材原话：很多时间序列数据有<b>非线性</b>，线性模型映射不了；SVM 在回归任务中考虑非线性的能力，使 SVR 在预测上取得成功。</p>
+  </div>
+</div>
+
+<h3>5.1 关键改造：把序列reshape 成 [batch, timesteps]</h3>
+
+<p>SVR 不是序列模型，得先把数据改造成「用前 N 步预测第 N+1 步」的监督学习格式。教材取 <code>timesteps = 5</code>：<strong>输入前 4 步，输出第 5 步</strong>。</p>
+
+<div class="kb-code-wrap">
+  <span class="kb-code-lang">python</span>
+  <pre><code>timesteps = 5
+
+train_data_timesteps = np.array([[j for j in train_data[i:i+timesteps]]
+                                 for i in range(0, len(train_data)-timesteps+1)])[:,:,0]
+# (1412, 5)
+
+x_train, y_train = train_data_timesteps[:, :timesteps-1], train_data_timesteps[:, [timesteps-1]]
+x_test,  y_test  = test_data_timesteps[:,  :timesteps-1], test_data_timesteps[:,  [timesteps-1]]
+
+# x_train (1412, 4)   y_train (1412, 1)
+# x_test  (44, 4)     y_test  (44, 1)</code></pre>
+</div>
+
+<div class="kb-callout">
+  <b>注意样本数变少了</b>：1416 → 1412、48 → 44。因为滑动窗口切不出完整的头尾。<b>这种「用滞后值当特征」的构造法是所有非序列模型做时间序列的通用套路</b>。
+</div>
+
+<h3>5.2 建模与三个 MAPE</h3>
+
+<div class="kb-code-wrap">
+  <span class="kb-code-lang">python</span>
+  <pre><code>model = SVR(kernel='rbf', gamma=0.5, C=10, epsilon=0.05)
+model.fit(x_train, y_train[:, 0])</code></pre>
+</div>
+
+<div class="kb-table-wrap">
+  <table>
+    <thead>
+      <tr><th scope="col">评估范围</th><th scope="col">样本量</th><th scope="col">MAPE</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>训练集</td><td>1412</td><td><b>1.720%</b></td></tr>
+      <tr><td>测试集</td><td>44</td><td><b>1.262%</b></td></tr>
+      <tr><td>全量数据（2012–2014）</td><td>26300</td><td><b>2.057%</b></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2 id="s6">六、ARIMA vs SVR</h2>
+
+<div class="kb-table-wrap">
+  <table>
+    <thead>
+      <tr><th scope="col">维度</th><th scope="col">ARIMA / SARIMA</th><th scope="col">SVR</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>出身</td><td>统计学的线性方法</td><td>ML 的核方法</td></tr>
+      <tr><td>强项</td><td>趋势、季节性、自相关结构</td><td><b>非线性</b>关系</td></tr>
+      <tr><td>要调的东西</td><td><code>p,d,q</code> + <code>P,D,Q</code>，<b>主观且耗时</b></td><td><code>kernel</code>、<code>gamma</code>、<code>C</code>、<code>epsilon</code>、<code>timesteps</code></td></tr>
+      <tr><td>评估方式</td><td>walk-forward，<b>每步重训</b>（贵）</td><td>一次 fit，直接 predict（快）</td></tr>
+      <tr><td>本例最佳成绩</td><td><b>单步 0.557%</b>（更准）</td><td>测试 1.262%</td></tr>
+      <tr><td>可解释性</td><td>参数有统计含义，能出 summary 表</td><td>黑盒，靠超参搜索</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="kb-callout">
+  <b>别急着宣布 ARIMA 赢了。</b> 两者并不可比：ARIMA 报的是「单步 t+1」的 0.557%，SVR 报的是「测试集整体」的 1.262%，口径不同。真要公平对比，得让 SVR 也做 t+1、ARIMA 也报同一段的多步结果。
+</div>
+
+<h2 id="pitfalls">七、读完发现的问题与提醒</h2>
+
+<div class="kb-timeline">
+  <div class="kb-tl-item">
+    <span class="kb-tl-year">1</span>
+    <b>测试集只有 48 小时（2 天）</b>
+    <p>本期最值得警惕的一点。<code>test_start_dt</code> 是 2014-12-30，数据到 2014-12-31 结束，测试集就 <b>48 行</b>；SVR 再经滑动窗口一削只剩 <b>44 个样本</b>。在 44 个样本上比较「1.262% vs 0.557%」意义有限。<b>SVR 在 26300 个样本的全量数据上得到的 2.057%，反而是更可信的泛化数字。</b></p>
+  </div>
+  <div class="kb-tl-item">
+    <span class="kb-tl-year">2</span>
+    <b>教材正文与代码的日期对不上</b>
+    <p>第 2 讲正文写「把 9 月 1 日到 10 月 31 日这两个月划给训练集，11 月 1 日到 12 月 31 日给测试集」，但代码里是 <code>2014-11-01</code> 到 <code>2014-12-30</code>。第 3 讲照抄时把这个错误一起继承了。<b>以代码为准。</b></p>
+  </div>
+  <div class="kb-tl-item">
+    <span class="kb-tl-year">3</span>
+    <b>order 中途从 (4,1,0) 悄悄变成 (2,1,0)</b>
+    <p>初次建模用 <code>order=(4,1,0)</code>，进入 walk-forward 时换成了 <code>(2,1,0)</code>，教材没有解释。合理的推测是<b>为了控制重训成本</b>（48 次 × SARIMAX），但也可能是笔误——自己复现时值得两个都跑一遍对比。</p>
+  </div>
+  <div class="kb-tl-item">
+    <span class="kb-tl-year">4</span>
+    <b>季节周期 24 是硬编码的先验</b>
+    <p><code>seasonal_order=(1,1,0,24)</code> 里的 24 来自「小时数据的日周期」。<b>这个数字必须你自己判断</b>：换成日数据就是 7（周）或 365（年），搞错了模型就学歪。</p>
+  </div>
+  <div class="kb-tl-item">
+    <span class="kb-tl-year">5</span>
+    <b>MAPE 有个天生的坑：实际值接近 0 时会爆掉</b>
+    <p>MAPE 的分母是 actual。教材只给了定义没提这事。遇到负荷接近零的时刻，MAPE 会异常放大。<b>实践里常备 MAE / RMSE / sMAPE 一起看。</b></p>
+  </div>
+  <div class="kb-tl-item">
+    <span class="kb-tl-year">6</span>
+    <b>SVR 那课的「全量评估」才是真考验</b>
+    <p>把 2012–2014 全部 26300 个样本跑一遍得 2.057%，比测试集的 1.262% 高不少。<b>这才是模型在真实分布上的表现</b>——只报测试集数字会美化结果。</p>
+  </div>
+  <div class="kb-tl-item">
+    <span class="kb-tl-year">7</span>
+    <b>这套流程默认「规律会延续」</b>
+    <p>ARIMA 和 SVR 都是从历史推未来。教材列的「Abrupt changes 突变」（疫情导致企业骤停）正是这类模型的死穴——<b>断点之后的历史不再有效</b>。这也是第 1 讲要把「突变」单列为一种特征的原因。</p>
+  </div>
+</div>
+
+<h2 id="conclusion">结语</h2>
+
+<div class="kb-conclusion">
+  <ol>
+    <li><b>时间序列的第一铁律：测试集必须晚于训练集。</b> 随机切分会让模型偷看未来，所有指标作废。这是它跟前面所有模块最根本的区别。</li>
+    <li><b>行的顺序就是信息。</b> 所以不能 shuffle、不能用普通的 K 折交叉验证；要用<b>前进验证（walk-forward）</b>——教材称为时间序列评估的黄金标准。</li>
+    <li><b>先识别六个特征，再谈建模。</b> 趋势、季节性、异常值、长周期、恒定方差、突变——把它们当噪声削弱，模型才有东西可学。识别的手段就是<b>画图，包括放大画</b>。</li>
+    <li><b>非平稳先差分。</b> 平稳性 = 分布不随时间平移而变；差分 = 去掉非常数趋势、稳定均值。这是 ARIMA 里那个 <code>I</code>。</li>
+    <li><b>ARIMA 是线性的，非线性的部分交给核方法。</b> 这正是教材要在同一份数据上再跑一遍 SVR 的理由——不是为了比高低，而是展示<b>线性 vs 非线性两条路线</b>。</li>
+    <li><b>非序列模型做时间序列，靠「滞后值当特征」。</b> 把序列 reshape 成 <code>[batch, timesteps]</code>，用前 N 步预测第 N+1 步；代价是样本数减少 <code>timesteps-1</code> 个。</li>
+    <li><b>看指标先看样本量。</b> 本例测试集只有 48 小时、SVR 更是只剩 44 个样本，而全量 26300 个样本的 MAPE 是 2.057%。<b>在几十个样本上争 0.5 个百分点的胜负，不如扩大评估范围。</b></li>
+    <li><b>MAPE 好读但有盲区。</b> 「10 就是平均偏 10%」很直观，但分母是实际值，接近零时会失真，备一个 MAE/RMSE 更稳妥。</li>
+  </ol>
+</div>
+
+<div class="kb-source">
+  内容来源：微软 <a href="https://github.com/microsoft/ML-For-Beginners">ML for Beginners</a> 第七模块 <a href="https://github.com/microsoft/ML-For-Beginners/tree/main/7-TimeSeries">7-TimeSeries</a>（1-Introduction / 2-ARIMA / 3-SVR）；数据来自 GEFCom2014 预测竞赛（Tao Hong 等，<em>Probabilistic energy forecasting: Global Energy Forecasting Competition 2014 and beyond</em>, International Journal of Forecasting, 2016）。文中所有 shape、MAPE 数值均引自教材；第七节的日期不一致、order 变更、样本量等问题为我在阅读原文时发现。
+</div>
+
+</div>
