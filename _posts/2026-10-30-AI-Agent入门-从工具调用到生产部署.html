@@ -1,0 +1,336 @@
+---
+title: "AI Agent入门：从工具调用到生产部署"
+subtitle: "微软 AI Agents for Beginners 十课视频学习笔记"
+published: false
+layout: post
+author: 陈家辉
+tags:
+- 学习
+- AI Agent
+- 大模型
+---
+
+<link rel="stylesheet" href="{{ site.baseurl }}/css/ai-agent-notes.css?v=20261030">
+
+<div class="agent-article">
+<div class="kb-meta">
+<span>视频笔记 · 微软 AI Agents for Beginners</span>
+<span class="kb-chip">十课合集</span>
+<span class="kb-chip">工具调用</span>
+<span class="kb-chip">Agentic RAG</span>
+<span class="kb-chip">多 Agent</span>
+</div>
+<div class="kb-hero">
+<div class="kb-hero-label">一句话掌握全篇</div>
+<div class="kb-hero-formula"><span class="kb-hero-unit">理解目标 <span class="plus">→</span></span> <span class="kb-hero-unit">调用工具 <span class="plus">→</span></span> <span class="kb-hero-unit">检查结果 <span class="plus">→</span></span> <span class="kb-hero-unit">继续行动</span></div>
+<p>AI Agent 的核心，是让大模型围绕一个目标，结合上下文选择工具、执行动作，再根据结果决定下一步。理解这件事，需要同时关注模型、数据、工具和整个任务的运行过程。</p></div>
+<div>
+
+<p>这篇笔记按 Microsoft Developer 的 <a href="https://www.youtube.com/watch?v=OhI005_aJkA" rel="noopener noreferrer" target="_blank">Full Course (Lessons 1-10) AI Agents for Beginners</a> 整理课程主线，并参考同系列的同期官方讲义。视频发布于 2025 年 3 月 24 日，全长约 64 分钟，使用旅行助手串起 Agent 的主要概念。</p>
+<div class="kb-callout"><p>文中的框架定位按视频发布时的语境记录，讲义链接固定到 <a href="https://github.com/microsoft/ai-agents-for-beginners/tree/ad07e8c9b0388ee7b213a9bd5c04be13a4a5472b" rel="noopener noreferrer" target="_blank">2025 年 3 月的课程版本</a>。本文侧重概念与设计方法，具体 SDK 写法应结合使用版本核对；末尾的实践顺序是个人归纳。</p></div>
+<h2 id="course-map">十课路线图</h2><div aria-label="十课视频导航" class="kb-table-wrap" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">视频时间</th>
+<th scope="col">课程主题</th>
+<th scope="col">要解决的问题</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://www.youtube.com/watch?v=OhI005_aJkA&amp;t=0s" rel="noopener noreferrer" target="_blank">00:00</a></td>
+<td><a href="#lesson-1">Agent 基础</a></td>
+<td>一个能执行任务的 Agent 由什么组成？</td>
+</tr>
+<tr>
+<td><a href="https://www.youtube.com/watch?v=OhI005_aJkA&amp;t=355s" rel="noopener noreferrer" target="_blank">05:55</a></td>
+<td><a href="#lesson-2">框架选择</a></td>
+<td>框架替开发者管理哪些事情？</td>
+</tr>
+<tr>
+<td><a href="https://www.youtube.com/watch?v=OhI005_aJkA&amp;t=854s" rel="noopener noreferrer" target="_blank">14:14</a></td>
+<td><a href="#lesson-3">设计原则</a></td>
+<td>用户如何理解并控制 Agent？</td>
+</tr>
+<tr>
+<td><a href="https://www.youtube.com/watch?v=OhI005_aJkA&amp;t=1175s" rel="noopener noreferrer" target="_blank">19:35</a></td>
+<td><a href="#lesson-4">工具调用</a></td>
+<td>模型如何连接外部数据与操作？</td>
+</tr>
+<tr>
+<td><a href="https://www.youtube.com/watch?v=OhI005_aJkA&amp;t=1547s" rel="noopener noreferrer" target="_blank">25:47</a></td>
+<td><a href="#lesson-5">Agentic RAG</a></td>
+<td>信息不足时，怎样继续查找？</td>
+</tr>
+<tr>
+<td><a href="https://www.youtube.com/watch?v=OhI005_aJkA&amp;t=1983s" rel="noopener noreferrer" target="_blank">33:03</a></td>
+<td><a href="#lesson-6">可信 Agent</a></td>
+<td>怎样约束行为并引入人工反馈？</td>
+</tr>
+<tr>
+<td><a href="https://www.youtube.com/watch?v=OhI005_aJkA&amp;t=2334s" rel="noopener noreferrer" target="_blank">38:54</a></td>
+<td><a href="#lesson-7">规划模式</a></td>
+<td>怎样把复杂目标拆成可执行步骤？</td>
+</tr>
+<tr>
+<td><a href="https://www.youtube.com/watch?v=OhI005_aJkA&amp;t=2660s" rel="noopener noreferrer" target="_blank">44:20</a></td>
+<td><a href="#lesson-8">多 Agent</a></td>
+<td>不同角色如何分工和协作？</td>
+</tr>
+<tr>
+<td><a href="https://www.youtube.com/watch?v=OhI005_aJkA&amp;t=3082s" rel="noopener noreferrer" target="_blank">51:22</a></td>
+<td><a href="#lesson-9">元认知与反思</a></td>
+<td>怎样根据反馈调整策略？</td>
+</tr>
+<tr>
+<td><a href="https://www.youtube.com/watch?v=OhI005_aJkA&amp;t=3512s" rel="noopener noreferrer" target="_blank">58:32</a></td>
+<td><a href="#lesson-10">生产部署</a></td>
+<td>怎样评估、排错和控制成本？</td>
+</tr>
+</tbody>
+</table></div>
+</div><section aria-labelledby="lesson-1"><h2 id="lesson-1">一、Agent 的基础：模型、记忆与工具</h2>
+<div class="kb-lead">
+<span aria-hidden="true" class="kb-icon">01</span>
+<p>三个基础组件：大模型、记忆与工具。</p>
+<a aria-label="在视频中观看第1课，从00:00开始" class="kb-time" href="https://www.youtube.com/watch?v=OhI005_aJkA&amp;t=0s" rel="noopener noreferrer" target="_blank">00:00 ↗</a>
+</div>
+
+<p>课程开头从三个部分解释 Agent：</p>
+<div class="kb-def"><div class="kb-def-item"><span class="kb-word">大模型（LLM）</span><p>理解用户的意图，根据已有信息决定行动步骤。</p></div><div class="kb-def-item"><span class="kb-word">记忆（Memory）</span><p>保存当前任务的上下文，以及后续可能复用的偏好和经验。</p></div><div class="kb-def-item"><span class="kb-word">工具（Tools）</span><p>读取外部信息或执行动作，例如查询目的地、检索文档、调用业务 API。</p></div></div>
+<p>旅行助手接到“帮我规划一次旅行”的请求后，需要理解目的、获取可用信息，再给出方案。用户补充偏好或否定建议时，这些信息也应该影响后续选择。</p>
+<p>视频的开场示例把一组目的地封装成工具。用户要求换个去处时，助手结合前面的对话给出另一个建议，展示了模型、工具和短期记忆怎样一起工作。</p>
+<p>这里的记忆可以分为两层：短期记忆保存这轮对话和任务状态；长期记忆保存跨任务仍有价值的信息，例如用户的出行偏好。长期记忆需要应用负责存储、检索和更新，不能假定模型会自动记住每次交流。</p>
+<p>从系统角度看，Agent 还需要一个明确的运行环境：能读取什么状态、允许执行哪些动作、完成任务后如何获得反馈。这些条件共同决定它的能力范围。<a href="https://github.com/microsoft/ai-agents-for-beginners/blob/ad07e8c9b0388ee7b213a9bd5c04be13a4a5472b/01-intro-to-ai-agents/README.md" rel="noopener noreferrer" target="_blank">第一课官方讲义</a></p>
+<p>下面是对这条运行主线的概念归纳：</p>
+
+<div aria-label="Agent任务执行循环" class="kb-flow" role="group">
+<div class="kb-step"><b>理解任务</b><small>读取用户目标与上下文</small></div>
+<span aria-hidden="true" class="kb-arrow">→</span>
+<div class="kb-step"><b>选择行动</b><small>规划步骤与可用工具</small></div>
+<span aria-hidden="true" class="kb-arrow">→</span>
+<div class="kb-step"><b>调用工具</b><small>校验参数并执行操作</small></div>
+<span aria-hidden="true" class="kb-arrow">→</span>
+<div class="kb-step"><b>评估结果</b><small>更新状态并判断下一步</small></div>
+</div>
+<p class="kb-flow-note"><strong>达到目标：</strong>返回结果；<strong>信息不足：</strong>继续行动；<strong>达到运行边界：</strong>说明限制或请求人工介入。</p>
+
+<p>开放式、多步骤、需要依据反馈调整的任务，更能体现这种结构的价值。对于步骤固定的简单任务，也应先考虑普通函数或确定性的工作流是否已经足够。</p>
+</section><section aria-labelledby="lesson-2"><h2 id="lesson-2">二、框架管理的是任务运行过程</h2>
+<div class="kb-lead">
+<span aria-hidden="true" class="kb-icon">02</span>
+<p>先明确任务需要，再选择框架和托管服务。</p>
+<a aria-label="在视频中观看第2课，从05:55开始" class="kb-time" href="https://www.youtube.com/watch?v=OhI005_aJkA&amp;t=355s" rel="noopener noreferrer" target="_blank">05:55 ↗</a>
+</div>
+
+<p>接入模型只是 Agent 开发的一部分。应用还要管理上下文、工具描述、执行状态、多个角色之间的消息，以及日志和评估。框架把这些共性能力组织起来，减少重复实现。</p>
+<p>视频介绍了当时微软生态中的三种选择：</p>
+<div aria-label="Agent框架与服务对比" class="kb-table-wrap" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">框架或服务</th>
+<th scope="col">课程中的定位</th>
+<th scope="col">理解重点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Azure AI Agent Service</td>
+<td>托管 Agent 服务</td>
+<td>管理 Agent、线程、消息和内置工具，并连接 Azure 服务</td>
+</tr>
+<tr>
+<td>Semantic Kernel</td>
+<td>面向企业应用的编排 SDK</td>
+<td>通过连接器、插件等组织模型与业务能力</td>
+</tr>
+<tr>
+<td>AutoGen</td>
+<td>偏重研究与实验的 Agent 框架</td>
+<td>探索多 Agent 的消息交互和协作方式</td>
+</tr>
+</tbody>
+</table></div>
+<p>它们承担的职责有所不同，托管服务也可以与编排框架结合使用。这张表记录的是 <strong>2025 年课程中的介绍</strong>，不作为当前产品能力的完整比较。</p>
+<p>选型时更有用的问题是：当前任务需要几个 Agent？哪些工具必须接入？上下文由谁维护？如何观察一次执行？框架提供不同的组织方式，具体选择需要结合任务复杂度和运行要求评估。<a href="https://github.com/microsoft/ai-agents-for-beginners/blob/ad07e8c9b0388ee7b213a9bd5c04be13a4a5472b/02-explore-agentic-frameworks/README.md" rel="noopener noreferrer" target="_blank">第二课官方讲义</a></p>
+</section><section aria-labelledby="lesson-3"><h2 id="lesson-3">三、设计 Agent，要让用户理解并控制它</h2>
+<div class="kb-lead">
+<span aria-hidden="true" class="kb-icon">03</span>
+<p>让用户知道 Agent 能做什么、正在做什么，以及如何介入。</p>
+<a aria-label="在视频中观看第3课，从14:14开始" class="kb-time" href="https://www.youtube.com/watch?v=OhI005_aJkA&amp;t=854s" rel="noopener noreferrer" target="_blank">14:14 ↗</a>
+</div>
+
+<p>第三课把视角转向用户体验。Agent 可能连续执行多个步骤，甚至在后台处理任务，因此用户需要知道它具备哪些能力、正在做什么，以及何时能够介入。</p>
+<p>同期讲义把落地原则概括为透明、控制和一致性：</p>
+<div class="kb-grid"><div class="kb-card"><span class="kb-num">01</span><b>透明</b><p>说明 AI 的身份、能力、限制和任务状态。</p></div><div class="kb-card"><span class="kb-num">02</span><b>控制</b><p>允许用户补充偏好、修正结果、提供反馈，以及管理历史信息。</p></div><div class="kb-card"><span class="kb-num">03</span><b>一致性</b><p>使用用户熟悉的交互，让同一种操作保持可预期。</p></div></div>
+<p>以旅行助手为例，用户应该能区分“正在查询可用航班”“已生成候选方案”和“预订已完成”这些状态。明确的状态能帮助用户判断下一步，也能减少对 Agent 能力的误解。</p>
+<p>这些设计原则是架构和交互的起点。把后台执行过程、反馈入口和人工介入方式一起设计，才能让任务推进过程保持可理解。<a href="https://github.com/microsoft/ai-agents-for-beginners/blob/ad07e8c9b0388ee7b213a9bd5c04be13a4a5472b/03-agentic-design-patterns/README.md" rel="noopener noreferrer" target="_blank">第三课官方讲义</a></p>
+</section><section aria-labelledby="lesson-4"><h2 id="lesson-4">四、工具调用：把模型的选择连接到真实执行</h2>
+<div class="kb-lead">
+<span aria-hidden="true" class="kb-icon">04</span>
+<p>模型提出调用请求，应用负责校验与执行。</p>
+<a aria-label="在视频中观看第4课，从19:35开始" class="kb-time" href="https://www.youtube.com/watch?v=OhI005_aJkA&amp;t=1175s" rel="noopener noreferrer" target="_blank">19:35 ↗</a>
+</div>
+
+<p>工具使用模式让 Agent 获得外部能力。工具既可以是简单函数，也可以是数据库查询、搜索服务、业务 API 或代码解释器。</p>
+<p>一次典型的工具调用包含以下步骤：</p>
+<div aria-label="工具调用的五个步骤" class="kb-timeline" role="list"><div class="kb-tl-item" role="listitem"><span aria-hidden="true" class="kb-tl-year">01</span><p>应用向模型提供工具名称、用途和参数结构。</p></div><div class="kb-tl-item" role="listitem"><span aria-hidden="true" class="kb-tl-year">02</span><p>模型根据用户请求，生成工具调用请求和参数。</p></div><div class="kb-tl-item" role="listitem"><span aria-hidden="true" class="kb-tl-year">03</span><p>应用校验请求，并运行相应函数或服务。</p></div><div class="kb-tl-item" role="listitem"><span aria-hidden="true" class="kb-tl-year">04</span><p>应用把工具结果送回模型。</p></div><div class="kb-tl-item" role="listitem"><span aria-hidden="true" class="kb-tl-year">05</span><p>模型结合结果回答用户，或选择下一个动作。</p></div></div>
+<div class="kb-callout"><p><strong>模型产生调用请求，应用负责实际执行。</strong> 因此，看到模型返回工具名和参数时，还需要确认执行是否成功，以及返回数据是否满足任务要求。</p></div>
+<p>工具的名称、描述和参数定义会影响模型的选择。将“列出目的地”和“查询某个目的地是否可预订”拆成用途清楚的工具，就能让应用分别处理不同意图。</p>
+<p>工具层也承担业务约束：检查参数是否合法、执行权限是否足够、服务失败后怎样返回错误。尤其是数据库和有副作用的操作，需要由程序与权限系统落实边界。<a href="https://github.com/microsoft/ai-agents-for-beginners/blob/ad07e8c9b0388ee7b213a9bd5c04be13a4a5472b/04-tool-use/README.md" rel="noopener noreferrer" target="_blank">第四课官方讲义</a></p>
+</section><section aria-labelledby="lesson-5"><h2 id="lesson-5">五、Agentic RAG：根据信息缺口继续行动</h2>
+<div class="kb-lead">
+<span aria-hidden="true" class="kb-icon">05</span>
+<p>信息不足时，继续检索、改写查询或切换工具。</p>
+<a aria-label="在视频中观看第5课，从25:47开始" class="kb-time" href="https://www.youtube.com/watch?v=OhI005_aJkA&amp;t=1547s" rel="noopener noreferrer" target="_blank">25:47 ↗</a>
+</div>
+
+<p>RAG，即检索增强生成，将检索得到的资料放入模型上下文，帮助模型利用外部知识回答问题。一个基础流程可以表示为：用户提问、检索相关资料、组织答案。</p>
+<p>Agentic RAG 进一步让 Agent 判断：当前资料是否足够？缺少哪些信息？应该改写查询、继续检索，还是调用另一种工具？</p>
+<p>例如，一份旅行文档可以说明某地适合什么活动，但用户还关心温度或可用航班。Agent 可以把文档检索与其他工具组合起来，补齐回答所需的信息。</p>
+<div aria-label="基础RAG与Agentic RAG对比" class="kb-table-wrap" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">维度</th>
+<th scope="col">基础 RAG 流程</th>
+<th scope="col">Agentic RAG</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>执行路径</td>
+<td>常见实现采用预设检索流程</td>
+<td>根据中间结果决定后续动作</td>
+</tr>
+<tr>
+<td>信息来源</td>
+<td>按预设方式访问知识源</td>
+<td>可组合检索、数据库与 API 等工具</td>
+</tr>
+<tr>
+<td>资料不足时</td>
+<td>依赖既定的缺失处理方式</td>
+<td>可继续查询、切换工具或寻求帮助</td>
+</tr>
+<tr>
+<td>状态管理</td>
+<td>取决于具体实现</td>
+<td>通常需要记录已尝试的步骤与结果</td>
+</tr>
+</tbody>
+</table></div>
+<p>这里比较的是课程用来说明概念的基础流程。普通 RAG 系统也可以加入重试、查询改写等能力；Agentic RAG 的重点在于，利用 Agent 动态组织这些步骤。</p>
+<p>多轮检索增加了补充证据的机会，也增加了成本和错误传播的可能。系统仍需设置终止条件，并保留信息来源与执行记录，方便判断答案是否有依据。<a href="https://github.com/microsoft/ai-agents-for-beginners/blob/ad07e8c9b0388ee7b213a9bd5c04be13a4a5472b/05-agentic-rag/README.md" rel="noopener noreferrer" target="_blank">第五课官方讲义</a></p>
+</section><section aria-labelledby="lesson-6"><h2 id="lesson-6">六、可信 Agent：提示词、权限与人工参与</h2>
+<div class="kb-lead">
+<span aria-hidden="true" class="kb-icon">06</span>
+<p>把提示词、权限、运行边界和人工参与一起设计。</p>
+<a aria-label="在视频中观看第6课，从33:03开始" class="kb-time" href="https://www.youtube.com/watch?v=OhI005_aJkA&amp;t=1983s" rel="noopener noreferrer" target="_blank">33:03 ↗</a>
+</div>
+
+<p>工具越多，Agent 能影响的系统也越多。第六课关注如何让这些能力按预期运行。</p>
+<p>首先，需要明确的系统消息，说明角色、责任、任务范围和行为规则。同期讲义还介绍了用模板生成系统消息，再通过评估持续调整的方法。</p>
+<p>其次，需要系统层面的约束：</p>
+<div class="kb-grid"><div class="kb-card"><span class="kb-num">01</span><b>最小权限</b><p>为工具和数据配置完成任务所需的最小权限。</p></div><div class="kb-card"><span class="kb-num">02</span><b>可信知识源</b><p>保护知识源，降低错误或被篡改的信息进入流程的风险。</p></div><div class="kb-card"><span class="kb-num">03</span><b>运行上限</b><p>限制调用次数和运行轮次，避免资源持续消耗。</p></div><div class="kb-card"><span class="kb-num">04</span><b>故障处理</b><p>为外部服务失败准备隔离、重试或回退方式。</p></div><div class="kb-card"><span class="kb-num">05</span><b>人工参与</b><p>在适当环节让用户反馈、批准或终止任务。</p></div></div>
+<p>这也是 Human-in-the-loop 的作用：把人的判断接入任务执行过程。对于旅行助手，用户可以在方案生成后修正偏好，再决定是否继续后续操作。</p>
+<p>系统消息、权限控制、运行边界和人工参与需要共同发挥作用。提示词能够描述规则，程序和服务还需要落实这些规则。<a href="https://github.com/microsoft/ai-agents-for-beginners/blob/ad07e8c9b0388ee7b213a9bd5c04be13a4a5472b/06-building-trustworthy-agents/README.md" rel="noopener noreferrer" target="_blank">第六课官方讲义</a></p>
+</section><section aria-labelledby="lesson-7"><h2 id="lesson-7">七、规划模式：让复杂目标成为可管理的步骤</h2>
+<div class="kb-lead">
+<span aria-hidden="true" class="kb-icon">07</span>
+<p>明确目标，拆分子任务，再根据执行结果调整计划。</p>
+<a aria-label="在视频中观看第7课，从38:54开始" class="kb-time" href="https://www.youtube.com/watch?v=OhI005_aJkA&amp;t=2334s" rel="noopener noreferrer" target="_blank">38:54 ↗</a>
+</div>
+
+<p>当用户的目标涉及多个动作时，可以先生成计划，再组织执行。</p>
+<p>以“三天的旅行安排”为例，任务可能包含确定偏好、查询航班、选择酒店、安排交通和活动、汇总行程。规划需要考虑每一步的输入、依赖关系、使用的工具，以及完成后交付什么结果。</p>
+<p>同期讲义用结构化计划说明这一过程。通过 JSON 等格式，系统可以明确记录子任务和负责它的 Agent，便于下游解析与分派。</p>
+<p>计划还要随执行结果调整。酒店不可用、航班时间发生变化，或者用户新增限制，都可能使原计划失效。执行中的反馈应该回到规划阶段，推动局部修改或重新规划。</p>
+<div class="kb-callout"><p>需要分清三个状态：<strong>计划已生成、动作已执行、目标已达成</strong>。它们分别需要不同的证据。结构化输出帮助系统传递计划，工具返回值说明动作结果，任务评估则判断最终是否满足用户目标。<a href="https://github.com/microsoft/ai-agents-for-beginners/blob/ad07e8c9b0388ee7b213a9bd5c04be13a4a5472b/07-planning-design/README.md" rel="noopener noreferrer" target="_blank">第七课官方讲义</a></p></div>
+</section><section aria-labelledby="lesson-8"><h2 id="lesson-8">八、多 Agent：分工之外，还要设计协作</h2>
+<div class="kb-lead">
+<span aria-hidden="true" class="kb-icon">08</span>
+<p>分清角色、共享约束，并约定交接与终止方式。</p>
+<a aria-label="在视频中观看第8课，从44:20开始" class="kb-time" href="https://www.youtube.com/watch?v=OhI005_aJkA&amp;t=2660s" rel="noopener noreferrer" target="_blank">44:20 ↗</a>
+</div>
+
+<p>多 Agent 系统让不同角色围绕共同目标工作。旅行场景可以分为航班、酒店、活动规划等角色，由协调者分派任务并汇总结果。</p>
+<p>这种拆分有助于限定每个角色的职责和工具范围。它也带来新的问题：各角色如何通信？共享哪些上下文？日期和预算怎样保持一致？一个任务失败后，其他任务如何处理？</p>
+<p>同期讲义介绍了群聊、交接等协作方式。无论采用哪种方式，系统都需要明确：</p>
+<ol>
+<li>谁负责当前子任务，谁负责最终结果。</li>
+<li>交接时要传递哪些信息。</li>
+<li>如何判断子任务完成，以及何时停止协作。</li>
+<li>用户可以在哪些环节介入。</li>
+</ol>
+<p>运行日志也要能够还原每个 Agent 的行动和信息流。只有看清各角色的贡献与开销，才能判断增加 Agent 是否改善了任务结果。<a href="https://github.com/microsoft/ai-agents-for-beginners/blob/ad07e8c9b0388ee7b213a9bd5c04be13a4a5472b/08-multi-agent/README.md" rel="noopener noreferrer" target="_blank">第八课官方讲义</a></p>
+</section><section aria-labelledby="lesson-9"><h2 id="lesson-9">九、元认知：把反馈用于调整决策策略</h2>
+<div class="kb-lead">
+<span aria-hidden="true" class="kb-icon">09</span>
+<p>通过评估和反馈，改进下一次的决策策略。</p>
+<a aria-label="在视频中观看第9课，从51:22开始" class="kb-time" href="https://www.youtube.com/watch?v=OhI005_aJkA&amp;t=3082s" rel="noopener noreferrer" target="_blank">51:22 ↗</a>
+</div>
+
+<p>第九课使用 Metacognition，也就是元认知，讨论 Agent 如何评估自己的选择并调整后续策略。</p>
+<p>从工程角度，可以把它理解为一个反馈循环：明确目标，执行任务，评估结果，记录问题，再调整下一次行动。</p>
+<p>同期讲义中的酒店推荐示例很直观：最初按低价选择酒店，得到质量不符合要求的反馈后，修改价格与质量的权衡方式。类似地，如果用户不喜欢拥挤景点，后续推荐也应调整筛选依据。</p>
+<p>这里可以区分两种改进：一种是修改当前答案，另一种是修改产生答案的策略。后者需要保存有用的反馈，并在之后的检索、排序或规划中重新使用。</p>
+<p>这种适应过程可以通过上下文、记忆和程序逻辑实现，并不必然涉及模型参数更新。对自我评估的结果，也应该结合工具数据、用户反馈和明确标准来检查。<a href="https://github.com/microsoft/ai-agents-for-beginners/blob/ad07e8c9b0388ee7b213a9bd5c04be13a4a5472b/09-metacognition/README.md" rel="noopener noreferrer" target="_blank">第九课官方讲义</a></p>
+</section><section aria-labelledby="lesson-10"><h2 id="lesson-10">十、生产部署：评估整个任务链路</h2>
+<div class="kb-lead">
+<span aria-hidden="true" class="kb-icon">10</span>
+<p>评估整个任务链路，再比较质量、耗时和成本。</p>
+<a aria-label="在视频中观看第10课，从58:32开始" class="kb-time" href="https://www.youtube.com/watch?v=OhI005_aJkA&amp;t=3512s" rel="noopener noreferrer" target="_blank">58:32 ↗</a>
+</div>
+
+<p>最后一课将重点放在持续评估和运行管理上。Agent 涉及模型、工具、外部服务与用户交互，排错也需要沿着这些环节展开。</p>
+<div aria-label="Agent生产评估环节" class="kb-table-wrap" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th scope="col">评估环节</th>
+<th scope="col">需要观察的问题</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>模型与服务请求</td>
+<td>连接是否成功，响应时间是否合理？</td>
+</tr>
+<tr>
+<td>意图理解</td>
+<td>Agent 是否识别了用户真正要完成的任务？</td>
+</tr>
+<tr>
+<td>工具选择</td>
+<td>工具和参数是否适合当前目标？</td>
+</tr>
+<tr>
+<td>工具执行</td>
+<td>是否报错，返回的数据是否完整可用？</td>
+</tr>
+<tr>
+<td>结果组织</td>
+<td>回答是否正确使用工具结果并满足约束？</td>
+</tr>
+<tr>
+<td>用户反馈</td>
+<td>用户能否指出问题，反馈是否进入改进流程？</td>
+</tr>
+</tbody>
+</table></div>
+<p>记录这些评估点，有助于比较模型、提示词或工具变更前后的效果。例如，工具选择错误时，需要检查工具描述和调用逻辑；服务返回异常时，需要检查执行与回退机制。</p>
+<p>运行管理还包括终止条件和成本控制。同期讲义讨论了缓存、对合适任务使用较小模型，以及根据复杂度进行模型路由。应用应通过具体业务的评估结果判断这些调整是否可接受，并考虑缓存数据的时效性。</p>
+<p>这门课提供的是生产化思路概览。真正落地时，还需要把评估、监控、错误处理和用户反馈接到完整业务流程中。<a href="https://github.com/microsoft/ai-agents-for-beginners/blob/ad07e8c9b0388ee7b213a9bd5c04be13a4a5472b/10-ai-agents-production/README.md" rel="noopener noreferrer" target="_blank">第十课官方讲义</a></p>
+</section><section aria-labelledby="practice"><h2 id="practice">我的实践思路</h2>
+<p>结合这十课，我会按下面的顺序做一个小型 Agent 项目。以下是对课程内容的实践归纳：</p>
+<div class="kb-conclusion"><ol>
+<li><strong>先定义一个具体任务。</strong> 写清输入、成功条件、允许使用的数据和工具。例如，只完成“根据日期和预算生成候选行程”。</li>
+<li><strong>用单 Agent 跑通工具调用。</strong> 先接少量用途清楚的工具，检查参数、返回值和错误处理。</li>
+<li><strong>补齐状态与反馈。</strong> 保存用户已给出的条件、执行过的步骤和当前缺口，让任务能够继续推进。</li>
+<li><strong>按实际困难引入设计模式。</strong> 知识不足时加入检索，任务复杂时加入规划，存在清晰分工时再尝试多 Agent。</li>
+<li><strong>建立可重复的评估。</strong> 覆盖成功、缺少信息、工具失败和用户改需求等情况，再比较质量、耗时与成本。</li>
+</ol></div>
+<p>对后端开发而言，可以从一个熟悉的切入点开始：把工具当作受约束的服务接口，把任务状态当作需要维护的数据，把评估当作贯穿调用链路的检查。模型提供了理解自然语言和选择行动的能力，应用则负责让这些行动能够可靠地执行。</p></section>
+<div class="kb-source">
+  内容来源：Microsoft Developer 的 <a href="https://www.youtube.com/watch?v=OhI005_aJkA" rel="noopener noreferrer" target="_blank">AI Agents for Beginners 十课视频</a>，以及 <a href="https://github.com/microsoft/ai-agents-for-beginners/tree/ad07e8c9b0388ee7b213a9bd5c04be13a4a5472b" rel="noopener noreferrer" target="_blank">2025 年 3 月的同期官方课程</a>。各课正文保留对应讲义链接；框架定位按当时语境记录，实践顺序为个人归纳。
+</div>
+</div>
