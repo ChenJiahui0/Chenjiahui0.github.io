@@ -1,0 +1,266 @@
+---
+title: "Bot 与 Agent 架构对比：从预设流程到动态执行"
+subtitle: "逻辑架构、运行流程与工程取舍"
+published: false
+layout: post
+author: 陈家辉
+tags:
+- 人工智能
+- Agent
+- 架构设计
+---
+
+<link rel="stylesheet" href="{{ site.baseurl }}/css/ai-agent-notes.css?v=20261030">
+<link rel="stylesheet" href="{{ site.baseurl }}/css/bot-agent-architecture.css?v=20261101-2">
+
+<div class="agent-article bot-agent-article">
+  <div class="kb-meta">
+    <span>架构笔记 · 通用参考模型</span>
+    <span class="kb-chip">Workflow Bot</span>
+    <span class="kb-chip">LLM Agent</span>
+    <span class="kb-chip">Runtime / Harness</span>
+  </div>
+
+  <div class="kb-hero">
+    <div class="kb-hero-label">先看控制流程，再看使用了什么模型</div>
+    <div class="kb-hero-formula">下一步：由预设流程安排，或由模型动态选择</div>
+    <p>两者都能接入大模型、检索、API 和状态存储。关键区别是行动如何编排；权限、业务校验和运行边界始终需要程序落实。</p>
+  </div>
+
+  <p>本文比较两套通用设计：<strong>预设流程驱动的 Bot</strong>，以及<strong>Agent 驱动的 Bot</strong>。下文的“原架构”和“新架构”分别指这两个比较模型；模块图和 VPN 工单案例是参考设计，便于理解各组件如何配合。</p>
+
+  <div class="kb-def">
+    <div class="kb-def-item"><span class="kb-word">Bot：用户从哪里与系统交互</span><p>本文用它指聊天机器人这种产品和入口形态，例如网页、企业 IM 或消息平台。入口内部可以接规则、工作流，也可以接 Agent。</p></div>
+    <div class="kb-def-item"><span class="kb-word">Workflow：步骤如何被组织</span><p>开发者定义节点、分支和状态转移。节点内可以运行模型、检索资料或调用工具，也可以等待用户、循环和重试。</p></div>
+    <div class="kb-def-item"><span class="kb-word">LLM Agent：下一步如何被选择</span><p>模型结合目标、上下文和执行结果，参与选择下一步行动；运行时负责把这些选择变成受约束的实际执行。</p></div>
+  </div>
+  <p>本文采用的 workflow / agent 区分，可参照 <a href="https://docs.langchain.com/oss/python/langgraph/workflows-agents" target="_blank" rel="noopener noreferrer">LangGraph 的流程与 Agent 说明</a>。因此，使用 LLM、工具或多轮对话，本身不足以判断系统是否采用 Agent 执行方式。</p>
+
+  <nav class="architecture-nav" aria-label="本文导航">
+    <a href="#workflow-architecture">原架构</a>
+    <a href="#workflow-runtime">原运行流程</a>
+    <a href="#agent-architecture">新架构</a>
+    <a href="#agent-runtime">新运行流程</a>
+    <a href="#comparison">差异与优缺点</a>
+    <a href="#selection">适用场景</a>
+  </nav>
+  <p class="architecture-hint">图表保留可读字号；宽图和窄屏视图可横向滚动。</p>
+
+  <h2 id="workflow-architecture">一、原架构：预设流程驱动的 Bot</h2>
+  <div class="kb-lead"><span class="kb-icon" aria-hidden="true">01</span><p>开发者定义业务路径，运行时根据输入和状态选择已经定义好的分支。</p></div>
+
+  <figure class="architecture-figure">
+    <div class="architecture-canvas" tabindex="0" role="region" aria-label="可横向滚动的架构图">
+      <div class="language-mermaid">
+%%{init: {"flowchart":{"useMaxWidth":false},"sequence":{"useMaxWidth":false}}}%%
+flowchart TD
+    U["用户 / Bot 渠道"] --> G["接入层：认证、消息归一化"]
+    G --> R["意图路由：规则、分类模型或 LLM"]
+    R --> W["预设工作流 / 状态机"]
+    W <-->|"读取和更新"| S[("会话与业务状态")]
+    W --> H["预设业务处理器"]
+    H <-->|"按需调用"| T["检索 / LLM / 业务 API"]
+    H --> W
+    W --> O["回复 / 等待补充 / 人工交接"]
+    O --> U
+    classDef core fill:#eef2ff,stroke:#637bd0,color:#243755
+    class W,H core
+      </div>
+    </div>
+    <figcaption>图 1 · 组件关系图。意图识别可以使用模型；节点之间的业务路径主要由程序预先定义。</figcaption>
+  </figure>
+
+  <div class="kb-table-wrap" role="region" aria-label="原架构组件职责" tabindex="0">
+    <table>
+      <thead><tr><th scope="col">组件</th><th scope="col">主要职责</th></tr></thead>
+      <tbody>
+        <tr><td>接入与会话</td><td>验证来源和身份，处理重复消息，装载当前会话。</td></tr>
+        <tr><td>意图路由</td><td>把问题归到已支持的业务类型，选中相应流程。</td></tr>
+        <tr><td>工作流 / 状态机</td><td>决定当前节点、缺失字段、条件分支，以及下一次转移。</td></tr>
+        <tr><td>业务处理器</td><td>封装校验、检索和 API 调用，处理已经设计过的异常。</td></tr>
+        <tr><td>状态与输出</td><td>保存已收集的信息和执行结果，组织回复或等待下一轮输入。</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>例如，Rasa 的 flows 将所需用户信息、API / 数据库访问和分支条件写入业务逻辑。这说明流程式 Bot 可以拥有完整的多轮业务能力。图中的认证、消息去重等接入模块是本文补充的工程设计。<a href="https://rasa.com/docs/reference/primitives/flows" target="_blank" rel="noopener noreferrer">参考：Rasa Business Logic with Flows</a></p>
+
+  <h3 id="workflow-runtime">1.1 原架构的运行逻辑</h3>
+  <p>以用户请求“公司 VPN 连不上，帮我排查并登记工单”为例，一条预设业务路径可以这样运行：</p>
+  <ol>
+    <li>接入消息，验证身份，读取本轮对应的会话与流程状态。</li>
+    <li>识别 VPN 故障意图，进入已经配置好的排障流程。</li>
+    <li>检查操作系统、错误码等必填信息；缺少时保存进度并追问。</li>
+    <li>按照预设节点查询服务状态、匹配排障资料，再走相应分支。</li>
+    <li>满足工单字段、授权和业务条件后调用创建接口，保存实际回执。</li>
+    <li>返回处理结果；异常进入预设重试、失败说明或人工交接路径。</li>
+  </ol>
+
+  <figure class="architecture-figure">
+    <div class="architecture-canvas" tabindex="0" role="region" aria-label="可横向滚动的架构图">
+      <div class="language-mermaid">
+%%{init: {"flowchart":{"useMaxWidth":false},"sequence":{"useMaxWidth":false}}}%%
+sequenceDiagram
+    actor U as 用户
+    participant B as 接入与会话
+    participant W as 预设工作流
+    participant T as 业务工具
+    U->>B: 排查 VPN 并登记工单
+    B->>W: 消息、身份、会话状态
+    alt 必填信息不足
+        W-->>B: 保存节点，生成追问
+        B-->>U: 请求系统信息或错误码
+    else 信息足够
+        W->>T: 按预设分支查询状态与资料
+        T-->>W: 检查结果
+        W->>T: 满足业务条件后创建工单
+        T-->>W: 成功回执或错误
+        W-->>B: 保存结果并组织回复
+        B-->>U: 工单号或明确的失败状态
+    end
+      </div>
+    </div>
+    <figcaption>图 2 · 一次请求的简化时序。补充信息后的后续请求从保存的流程状态继续。</figcaption>
+  </figure>
+  <div class="kb-callout"><p><strong>流程固定，仍然可以有分支、循环和模型调用。</strong> 这里的“固定”指可执行路径和转移规则由开发者定义；模型输出和外部服务结果仍可能变化。</p></div>
+
+  <h2 id="agent-architecture">二、新架构：Agent 驱动的 Bot</h2>
+  <div class="kb-lead"><span class="kb-icon" aria-hidden="true">02</span><p>Bot 保留消息入口，内部加入能够管理任务与模型行动循环的 Runtime / Harness。</p></div>
+
+  <figure class="architecture-figure">
+    <div class="architecture-canvas" tabindex="0" role="region" aria-label="可横向滚动的架构图">
+      <div class="language-mermaid">
+%%{init: {"flowchart":{"useMaxWidth":false},"sequence":{"useMaxWidth":false}}}%%
+flowchart TD
+    I["Bot 接入层<br/>认证 / 会话"] --> C
+    subgraph H["Agent Runtime / Harness"]
+        C["任务调度<br/>上下文组装"] <--> M["LLM<br/>选择下一步"]
+        C <--> S[("会话 / 任务状态")]
+        C --> P["参数与权限<br/>预算 / 超时"]
+        P --> E["工具执行器"]
+        E -->|"执行结果"| C
+    end
+    E <-->|"受控调用"| T["检索 / API<br/>其他工具"]
+    C --> O["结果检查<br/>回复 / 等待"]
+    classDef core fill:#e8f6f3,stroke:#3b9c8d,color:#193f39
+    class C,P,E core
+      </div>
+    </div>
+    <figcaption>图 3 · 组件关系图。模型提出行动，Runtime 校验并执行；有副作用的业务操作仍走受控接口。</figcaption>
+  </figure>
+
+  <div class="kb-table-wrap" role="region" aria-label="Agent架构组件职责" tabindex="0">
+    <table>
+      <thead><tr><th scope="col">组件</th><th scope="col">主要职责</th></tr></thead>
+      <tbody>
+        <tr><td>上下文组装</td><td>提供用户目标、已知约束、必要历史、工具说明和本轮观测。</td></tr>
+        <tr><td>LLM 决策</td><td>选择直接回答、询问用户、调用工具，或调整后续行动。</td></tr>
+        <tr><td>Runtime / Harness</td><td>组织执行循环，检查权限、预算、超时、取消及最大轮数，记录运行状态。</td></tr>
+        <tr><td>工具执行器</td><td>校验参数，调用具体函数或服务，返回结构化的成功、失败或结果待确认信息。</td></tr>
+        <tr><td>任务状态</td><td>记录当前进展、已尝试的动作、执行回执和等待原因；需要恢复时使用持久化机制。</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Agent 常通过“行动—环境反馈—再选择”的循环处理开放任务。是否输出显式长计划、是否设置专门规划器，可以按任务选择；单个模型配合少量工具也能构成这种执行方式。<a href="https://www.anthropic.com/research/building-effective-agents" target="_blank" rel="noopener noreferrer">参考：Anthropic Building effective agents</a></p>
+
+  <h3 id="agent-runtime">2.1 新架构的运行逻辑</h3>
+  <ol>
+    <li><strong>初始化任务：</strong>确认目标、身份、允许使用的工具和运行上限。</li>
+    <li><strong>组装上下文：</strong>装载本次任务需要的状态、资料和历史结果。</li>
+    <li><strong>选择行动：</strong>模型可以回答、追问，也可以生成工具调用请求。</li>
+    <li><strong>受控执行：</strong>Runtime 检查参数和权限；需要人工判断的动作进入等待状态。</li>
+    <li><strong>观察结果：</strong>记录工具真正返回的内容，更新进度，再决定后续步骤。</li>
+    <li><strong>返回或暂停：</strong>达到任务目标后返回；缺少用户信息时等待；遇到限制、取消或无法恢复的错误时明确结束状态。</li>
+  </ol>
+
+  <figure class="architecture-figure">
+    <div class="architecture-canvas" tabindex="0" role="region" aria-label="可横向滚动的架构图">
+      <div class="language-mermaid">
+%%{init: {"flowchart":{"useMaxWidth":false},"sequence":{"useMaxWidth":false}}}%%
+flowchart TD
+    A["装载目标与任务状态"] --> B{"运行边界允许继续？"}
+    B -->|"否：取消、超时或预算用尽"| X["保存进度，返回停止原因"]
+    B -->|"是"| M["模型选择下一步行动"]
+    M --> D{"行动类型"}
+    D -->|"回答"| V{"输出依据与业务状态通过校验？"}
+    V -->|"通过"| O["返回结果，或说明未完成部分"]
+    V -->|"需修正"| R
+    D -->|"追问"| W["保存状态，等待用户补充"]
+    D -->|"工具请求"| P{"参数与权限是否通过？"}
+    P -->|"允许"| T["执行工具，记录真实回执"]
+    P -->|"拒绝或报错"| R["记录拒绝、失败或校验问题"]
+    P -->|"需要人工判断"| W
+    T --> S["更新任务状态与上下文"]
+    R --> S
+    S --> B
+    classDef core fill:#e8f6f3,stroke:#3b9c8d,color:#193f39
+    class A,M,T,S core
+      </div>
+    </div>
+    <figcaption>图 4 · 单个 Agent 的简化运行流程。Runtime 可对不满足返回条件的结果发起修正；任何继续执行都受同一组运行边界约束。</figcaption>
+  </figure>
+
+  <div class="kb-callout"><p><strong>三种状态要分开：</strong>模型生成了调用请求，表示它选择了某个动作；工具返回成功回执，表示动作执行结果已知；用户目标是否达成，还需要结合业务规则、证据或人工评估判断。</p></div>
+
+  <h3 id="state-and-recovery">2.2 状态、记忆与恢复</h3>
+  <p>对话消息、任务执行状态和长期记忆用途不同。任务状态记录进度与执行结果；跨任务有价值的偏好才适合进入长期记忆。LangGraph 的持久化文档也分别讨论了线程状态检查点与跨线程存储。持久化需要应用接入实际存储，不能把进程内历史当作可靠的崩溃恢复机制。<a href="https://docs.langchain.com/oss/python/langgraph/persistence" target="_blank" rel="noopener noreferrer">参考：LangGraph Persistence</a></p>
+  <p>创建工单时还有一个两套架构都要处理的问题：接口超时可能只是回执丢失，工单已经创建。重试应通过业务幂等键或结果核对避免重复创建。检查点和对话记忆不能自动保证外部操作只发生一次。<a href="https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/" target="_blank" rel="noopener noreferrer">参考：AWS 关于幂等 API 与安全重试的说明</a></p>
+
+  <h2 id="comparison">三、架构差异与优缺点</h2>
+  <div class="kb-lead"><span class="kb-icon" aria-hidden="true">03</span><p>比较同一业务目标下的控制方式和工程代价，不把某种组件当作 Agent 独有能力。</p></div>
+
+  <div class="kb-table-wrap" role="region" aria-label="Workflow Bot与Agent Bot差异对比" tabindex="0">
+    <table>
+      <thead><tr><th scope="col">维度</th><th scope="col">预设流程 Bot</th><th scope="col">Agent Bot</th></tr></thead>
+      <tbody>
+        <tr><td>下一步由谁决定</td><td>主要按程序定义的节点和转移规则执行。</td><td>模型结合目标和中间结果提出后续行动，Runtime 控制实际执行。</td></tr>
+        <tr><td>任务边界</td><td>适合步骤和异常类别较明确的任务。</td><td>适合所需步骤难以预先列全、需要动态探索的任务。</td></tr>
+        <tr><td>LLM 与工具</td><td>都可以使用，调用顺序主要被流程约束。</td><td>都可以使用，部分选择与顺序由模型动态决定。</td></tr>
+        <tr><td>状态管理</td><td>会话字段、流程节点、业务记录。</td><td>通常还需组织任务进展、行动历史和执行结果；长期记忆按需配置。</td></tr>
+        <tr><td>异常处理</td><td>已设计的重试、回退和人工交接路径较清晰。</td><td>可根据反馈尝试其他线索，也需防止无效重试和错误积累。</td></tr>
+        <tr><td>可预测性</td><td>编排路径较可预测；模型与外部数据仍可能使结果变化。</td><td>行动路径和调用次数可能变化，调试需要完整执行轨迹。</td></tr>
+        <tr><td>成本与时延</td><td>步骤较明确时较容易估算；复杂流程也可能昂贵。</td><td>动态轮次增加估算难度；实际开销取决于任务、模型和工具。</td></tr>
+        <tr><td>测试重点</td><td>节点、分支、字段校验及端到端流程。</td><td>还要评估工具选择、任务成功、停止条件和不同执行轨迹。</td></tr>
+        <tr><td>权限与审计</td><td>在程序与工具接口中落实。</td><td>同样在程序与工具接口中落实，模型不能自行批准越权动作。</td></tr>
+        <tr><td>维护代价</td><td>业务分支增多时，流程图和规则维护负担上升。</td><td>工具契约、上下文、评估集和 Runtime 的维护负担上升。</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="kb-grid">
+    <div class="kb-card"><span class="kb-num">A+</span><b>预设流程的优势</b><p>路径清晰，容易围绕明确业务规则审查、测试和估算运行成本，适合稳定的标准流程。</p></div>
+    <div class="kb-card"><span class="kb-num">A−</span><b>预设流程的代价</b><p>需要提前覆盖分支；开放问题和例外增多后，流程容易膨胀，新增能力常需调整编排。</p></div>
+    <div class="kb-card"><span class="kb-num">B+</span><b>Agent 的优势</b><p>可根据中间结果调整工具和行动顺序，更适合信息不足、路径多变的调查与综合任务。</p></div>
+    <div class="kb-card"><span class="kb-num">B−</span><b>Agent 的代价</b><p>增加决策不确定性、潜在无效循环与排错难度，需要更细的执行观测和运行边界。</p></div>
+  </div>
+  <p>这些是设计取舍，不能直接推出某个实现更快、更便宜或成功率更高。采用更复杂的模式，需要通过业务评估证明收益。<a href="https://www.anthropic.com/research/building-effective-agents" target="_blank" rel="noopener noreferrer">参考：Anthropic 对复杂度、成本与任务表现的讨论</a></p>
+
+  <h3 id="same-request">3.1 同一个 VPN 工单请求，两套架构怎样处理</h3>
+  <div class="kb-table-wrap" role="region" aria-label="VPN工单场景对比" tabindex="0">
+    <table>
+      <thead><tr><th scope="col">情况</th><th scope="col">预设流程 Bot</th><th scope="col">Agent Bot</th></tr></thead>
+      <tbody>
+        <tr><td>用户没有给错误码</td><td>必填字段检查触发追问。</td><td>模型判断需要补充，或先查已获授权的服务状态；不能臆造缺失字段。</td></tr>
+        <tr><td>VPN 服务正常，但用户仍无法连接</td><td>进入事先设计的客户端或网络排障分支。</td><td>结合现有结果选择下一条可用线索；可执行范围受提供的工具限制。</td></tr>
+        <tr><td>查询接口失败</td><td>按预设策略重试、回退或交接。</td><td>在运行边界内重试或选择其他信息源；无法继续时明确说明。</td></tr>
+        <tr><td>创建工单接口超时</td><td colspan="2">两者都应核对结果或使用业务幂等键，避免重复创建；未确认成功时不能声称已经登记。</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="selection">四、怎样选择：按任务拆分控制方式</h2>
+  <p>在这个参考设计里，可以保留统一的 Bot 接入、身份校验和业务 API，把开放调查交给受控 Agent，把明确的交易或审批环节保留为程序流程：</p>
+  <div class="architecture-summary">统一接入与任务路由 → 固定工作流或受控 Agent → 业务校验与必要审批 → 受控执行 → 真实结果反馈</div>
+  <p>例如，Agent 动态完成 VPN 排障调查；创建工单仍经过固定字段校验、授权和幂等接口。选择混合方式的依据是业务需要，而不是对“新架构”的形式要求。微软的编排指南也讨论了模式组合，以及单 Agent 足以解决问题时避免额外协作复杂度。<a href="https://learn.microsoft.com/en-us/azure/architecture/ai-ml/guide/ai-agent-design-patterns/" target="_blank" rel="noopener noreferrer">参考：Azure AI agent orchestration patterns</a></p>
+
+  <div class="kb-conclusion">
+    <ol>
+      <li><strong>步骤明确、规则稳定：</strong>优先评估预设流程，例如资料收集、规则查询、表单提交与明确的审批流。</li>
+      <li><strong>路径随证据变化：</strong>评估 Agent，例如故障排查、多源资料综合、需要不断补齐信息的任务。</li>
+      <li><strong>任务同时包含两类环节：</strong>在同一系统内组合工作流与 Agent，把职责和交接条件定义清楚。</li>
+      <li><strong>用相同任务集比较：</strong>记录端到端成功率、人工接管率、错误操作、调用次数、P50 / P95 时延和单个成功任务的总成本。</li>
+    </ol>
+  </div>
+
+  <p>队列取决于耗时和并发需求，长期记忆取决于跨任务信息的价值，多 Agent 取决于分工收益，MCP 则是一种工具接入协议选择。这些能力都可以与工作流结合，也不是单个 Agent 的必要组成。</p>
+  <div class="kb-source"><p>来源为文中链接的官方文档与工程文章。架构图、VPN 案例、组件职责和对比表是基于这些模式的工程归纳，不对应某个具体项目或版本的实现。</p></div>
+</div>
